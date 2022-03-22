@@ -95,6 +95,20 @@ struct thread {
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
 
+	int64_t wakeup_tick;				// 몇 tick 후 wakeup할지
+
+	// priority donation
+	int init_priority; // 처음 priority (donation 종료 후 돌아가기 위함)
+	
+	struct lock *wait_on_lock; // thread가 기다리는(필요한, wait) lock
+	struct list donation_list; // priority를 donate 해준 thread list
+	struct list_elem donation_elem; //donation_list의 elem
+
+	// advanced scheduler
+	int recent_cpu;
+	int nice;
+
+
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
 	uint64_t *pml4;                     /* Page map level 4 */
@@ -142,5 +156,30 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
 void do_iret (struct intr_frame *tf);
+
+// alarm-clock
+void update_next_wakeup_tick(int64_t ticks);
+int64_t get_next_wakeup_tick(void);
+void sleep_thread(int64_t ticks);
+void awake_thread(int64_t ticks);
+
+//priority-scheduling
+bool thr_cmp_priority (const struct list_elem *x, const struct list_elem *y, void *aux UNUSED); // x, y 스레드의 우선순위를 비교)
+void test_highest_priority (void); // current thread와 ready_list의 높은 순위 thread 비교해서 yield 결정
+
+// donation
+bool thr_donation_cmp_priority(const struct list_elem *x, const struct list_elem *y, void *aux UNUSED); // x, y(donation_list의 elem) 의 priority 비교
+void donate_priority(void); // lock 얻을 때 priority donate (depth 8)
+void remove_with_lock_in_donation_list(struct lock *lock); // cur_thread의 donation_list에서 lock에 해당된 thread remove
+void update_priority (void); // donate 끝나고 priority update
+
+// advanced scheduler
+void cal_priority (struct thread *t);
+void cal_recent_cpu (struct thread *t);
+void cal_load_avg (void);
+
+void running_thr_incr_recent_cpu (void); //running thread의 recent_cpu 1tick마다 1씩 증가
+void recal_all_recent_cpu (void); // all thread의 recent_cpu 재계산
+void recal_all_priority(void); // all thread의 priority 재계산
 
 #endif /* threads/thread.h */
