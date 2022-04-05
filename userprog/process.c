@@ -43,6 +43,7 @@ process_create_initd (const char *file_name) {
 	char *fn_copy;
 	tid_t tid;
 
+	
 	/* Make a copy of FILE_NAME.
 	 * Otherwise there's a race between the caller and load(). */
 	fn_copy = palloc_get_page (0);
@@ -50,8 +51,14 @@ process_create_initd (const char *file_name) {
 		return TID_ERROR;
 	strlcpy (fn_copy, file_name, PGSIZE);
 
+	// // P2-1-3 file_name 토큰화 변수
+	// char *save_ptr;
+	// strtok_r(file_name, " ", &save_ptr); // run alarm-clock 에서 run 떼고 넘겨주기
+
 	/* Create a new thread to execute FILE_NAME. */
-	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
+	//file_name 이름으로하고 우선순위 default 인 스레스 생성 및 반환
+	// 스레드는 fn_copy를 인자로 받는 initd 실행
+	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy); 
 	if (tid == TID_ERROR)
 		palloc_free_page (fn_copy);
 	return tid;
@@ -162,8 +169,35 @@ error:
  * Returns -1 on fail. */
 int
 process_exec (void *f_name) {
-	char *file_name = f_name;
+	char *file_name = f_name; // f_name void로 넘겨 받았으므로 char *로 변환
 	bool success;
+
+	// P2_1_1. argument parsing 변수 선언 
+	// 파일명 추출하고 다른 인자들 stack에 저장
+	char *parsing, *save;
+	int argc = 0; 
+	char *argv[64];
+
+	// f_name parsing 해서 argv에 저장
+	parsing = strtok_r(f_name, " ", &save);
+	argv[argc] = parsing;
+
+	while (parsing) {
+		parsing = strtok_r(NULL, " ", &save);
+		argc = argc + 1;
+		argv[argc] = parsing;
+	}
+	// printf("argv[0] : %s \n", argv[0]);
+	// printf("check %d, %s \n", argc, argv[argc]);
+
+	// for (int i = argc -1; i >= 0; i--){
+	// 	len = strlen(argv[i]) + 1; // \0도 포함하기위해 +1
+	// 	printf("%s, %d \n", argv[i], len);
+	// 	arg_len = arg_len + len; // 각 arg 길이 합계
+	// 	printf("arg_len : %d \n", arg_len);
+	// 	// _if.rsp는 현재 위치 가리키는 stack pointer
+
+	// }
 
 	/* We cannot use the intr_frame in the thread structure.
 	 * This is because when current thread rescheduled,
@@ -177,15 +211,55 @@ process_exec (void *f_name) {
 	process_cleanup ();
 
 	/* And then load the binary */
-	success = load (file_name, &_if);
-
+	success = load (argv[0], &_if); // P2-1-1 file_name이 아니라 argv[0] load
 	/* If load failed, quit. */
-	palloc_free_page (file_name);
 	if (!success)
 		return -1;
 
+	// P2-1-2 argument stack
+	// 변수 선언
+	int arg_len = 0; // alignment 하기위해 arg 차지하는 byte 필요
+	char *arg_addr[64]; // stack에서 각 arg 주소 저장 배열
+	
+	int len = 0;
+	// printf("%s \n", argv[0]);
+	for (int i = argc -1; i >= 0; i--){
+		len = strlen(argv[i]) + 1; // \0도 포함하기위해 +1
+		arg_len = arg_len + len; // 각 arg 길이 합계
+		// _if.rsp는 현재 위치 가리키는 stack pointer
+		_if.rsp = _if.rsp - len; // user stack의 상단부터 argv[i] 크기만큼 이동
+		memcpy(_if.rsp, argv[i], arg_len); // argv[i]에서 arg_len 만큼읽어서 _if.rsp에 복사
+		arg_addr[i] = _if.rsp; // stock pointer 주소 저장
+	}
+
+	// word-align 
+	if ((arg_len % 8) != 0){
+		_if.rsp = (char *)_if.rsp - 8 + (arg_len % 8);
+		*(uint8_t *) _if.rsp = 0;
+	}
+
+	// stack에 문자열 주소 삽입, 처음에는 0
+	_if.rsp = _if.rsp - 8;
+	memset(_if.rsp, 0, sizeof(char **));
+	// memset: sizeof(char **) 만큼 0 채우기
+	for (int i = argc -1; i>=0; i--){
+		_if.rsp = _if.rsp - 8;
+		memcpy(_if.rsp, &arg_addr[i], sizeof(char **));
+	}
+	
+	//fake return address 삽입
+	_if.rsp = _if.rsp - 8;
+	memset(_if.rsp, 0, sizeof(void *));
+
+	_if.R.rdi = argc;
+	_if.R.rsi = _if.rsp + 8;
+
+	hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
+
 	/* Start switched process. */
+	// printf("-----do_iret before \n");
 	do_iret (&_if);
+	palloc_free_page (file_name); // hs는 do_iret 밑이였음? 왜?
 	NOT_REACHED ();
 }
 
@@ -204,6 +278,7 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
+	while(1);
 	return -1;
 }
 

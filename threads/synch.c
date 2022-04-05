@@ -110,15 +110,20 @@ sema_up (struct semaphore *sema) {
 
 	ASSERT (sema != NULL);
 
-	old_level = intr_disable ();
-	if (!list_empty (&sema->waiters)){
-		list_sort(&sema->waiters, thr_cmp_priority, NULL); // waiters에서 빼기 전에 priority로 sort
-		thread_unblock (list_entry (list_pop_front (&sema->waiters),
-					struct thread, elem)); // front에 있는 것이 priority 제일 높음 -> ready list
-	}
-	sema->value++;
+	old_level = intr_disable();
 
-	test_highest_priority(); // curr thread와 ready list priority 비교하고 스케줄링
+	if (!list_empty (&sema->waiters)) {
+		struct thread * t;
+		list_sort(&sema->waiters, thr_cmp_priority, NULL); // waiters에서 빼기 전에 priority로 sort
+		t = list_entry(list_pop_front(&sema->waiters), struct thread, elem); 
+		thread_unblock(t); // front에 있는 것이 priority 제일 높음 -> ready list
+		sema->value++;
+		if (!intr_context()) {
+			test_highest_priority(); // curr thread와 ready list priority 비교하고 스케줄링
+		}
+	}else {
+		sema->value++;
+	}
 
 	intr_set_level (old_level);
 }
