@@ -51,9 +51,9 @@ process_create_initd (const char *file_name) {
 		return TID_ERROR;
 	strlcpy (fn_copy, file_name, PGSIZE);
 
-	// // P2-1-3 file_name 토큰화 변수
-	// char *save_ptr;
-	// strtok_r(file_name, " ", &save_ptr); // run alarm-clock 에서 run 떼고 넘겨주기
+	// P2-1-3 file_name 토큰화 변수
+	char *save_ptr;
+	strtok_r(file_name, " ", &save_ptr); // run alarm-clock 에서 run 떼고 넘겨주기
 
 	/* Create a new thread to execute FILE_NAME. */
 	//file_name 이름으로하고 우선순위 default 인 스레스 생성 및 반환
@@ -254,7 +254,8 @@ process_exec (void *f_name) {
 	_if.R.rdi = argc;
 	_if.R.rsi = _if.rsp + 8;
 
-	hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
+	// hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
+	// stack 확인 함수
 
 	/* Start switched process. */
 	// printf("-----do_iret before \n");
@@ -278,7 +279,8 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
-	while(1);
+	//while(1);
+	for (int i = 0; i<1000000000; i++); //fork 완성 전까지 무한루프해제
 	return -1;
 }
 

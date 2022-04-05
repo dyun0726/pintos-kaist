@@ -12,25 +12,15 @@ Formatting file system...done.
 Boot complete.
 Putting 'fork-once' into the file system...
 Executing 'fork-once':
-initd : fork-oncefile_name : fork-once
-Page fault at 0x4747effe: not present error writing page in kernel context.
-Interrupt 0x0e (#PF Page-Fault Exception) at rip=8004217593
- cr2=000000004747effe error=               2
-rax 000000004747effe rbx 0000000000000000 rcx 000000004747efff rdx 00000000000000cc
-rsp 000000800423fa70 rbp 000000800423faa0 rsi 000000800423e000 rdi 000000004747effe
-rip 0000008004217593 r8 0000000000002000  r9 0000000000000001 r10 0000000000004000
-r11 0000000000000000 r12 0000000000000000 r13 0000000000000000 r14 0000000000000000
-r15 0000000000000000 rflags 00000202
-es: 0010 ds: 0010 cs: 0008 ss: 0010
-Kernel PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0x80042185ea 0x800421ce47 0x800421cfc6 0x8004209563 0x8004209981 0x800421c048 0x800421bc44 0x8004207650.
-The `backtrace' program can make call stacks useful.
-Read "Backtraces" in the "Debugging Tools" chapter
-of the Pintos documentation for more information.
-Timer: 270 ticks
-Thread: 32 idle ticks, 237 kernel ticks, 1 user ticks
+(fork-once) begin
+system call!
+Execution of 'fork-once' complete.
+Timer: 596 ticks
+Thread: 33 idle ticks, 563 kernel ticks, 0 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 80 reads, 234 writes
 hd1:0: 103 reads, 0 writes
-Console: 1754 characters output
-Key
+Console: 820 characters output
+Keyboard: 0 keys pressed
+Exception: 0 page faults
+Powering off...

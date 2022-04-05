@@ -1,12 +1,25 @@
 FAIL
-Kernel panic in run: PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0x80042185ea 0x800421ce47 0x800421cfc6 0x8004209563 0x8004209981 0x800421c048 0x800421bc44 0x8004207650
-Translation of call stack:
-0x00000080042185ea: debug_panic (lib/kernel/debug.c:32)
-0x000000800421ce47: kill (userprog/exception.c:103)
-0x000000800421cfc6: page_fault (userprog/exception.c:159 (discriminator 12))
-0x0000008004209563: intr_handler (threads/interrupt.c:352)
-0x0000008004209981: intr_entry (threads/intr-stubs.o:?)
-0x000000800421c048: process_exec (userprog/process.c:224 (discriminator 3))
-0x000000800421bc44: initd (userprog/process.c:77)
-0x0000008004207650: kernel_thread (threads/thread.c:440)
+Test output failed to match any acceptable form.
+
+Acceptable output:
+  (lg-seq-random) begin
+  (lg-seq-random) create "nibble"
+  (lg-seq-random) open "nibble"
+  (lg-seq-random) writing "nibble"
+  (lg-seq-random) close "nibble"
+  (lg-seq-random) open "nibble" for verification
+  (lg-seq-random) verified contents of "nibble"
+  (lg-seq-random) close "nibble"
+  (lg-seq-random) end
+Differences in `diff -u' format:
+  (lg-seq-random) begin
+  (lg-seq-random) create "nibble"
+- (lg-seq-random) open "nibble"
+- (lg-seq-random) writing "nibble"
+- (lg-seq-random) close "nibble"
+- (lg-seq-random) open "nibble" for verification
+- (lg-seq-random) verified contents of "nibble"
+- (lg-seq-random) close "nibble"
+- (lg-seq-random) end
+
+(Process exit codes are excluded for matching purposes.)

@@ -12,25 +12,24 @@ Formatting file system...done.
 Boot complete.
 Putting 'bad-write2' into the file system...
 Executing 'bad-write2':
-initd : bad-write2file_name : bad-write2
-Page fault at 0x4747effe: not present error writing page in kernel context.
-Interrupt 0x0e (#PF Page-Fault Exception) at rip=8004217593
- cr2=000000004747effe error=               2
-rax 000000004747effe rbx 0000000000000000 rcx 000000004747efff rdx 00000000000000cc
-rsp 000000800423fa70 rbp 000000800423faa0 rsi 000000800423e000 rdi 000000004747effe
-rip 0000008004217593 r8 0000000000002000  r9 0000000000000001 r10 0000000000004000
-r11 0000000000000000 r12 0000000000000000 r13 0000000000000000 r14 0000000000000000
-r15 0000000000000000 rflags 00000202
-es: 0010 ds: 0010 cs: 0008 ss: 0010
-Kernel PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0x80042185ea 0x800421ce47 0x800421cfc6 0x8004209563 0x8004209981 0x800421c048 0x800421bc44 0x8004207650.
-The `backtrace' program can make call stacks useful.
-Read "Backtraces" in the "Debugging Tools" chapter
-of the Pintos documentation for more information.
-Timer: 270 ticks
-Thread: 33 idle ticks, 236 kernel ticks, 1 user ticks
+(bad-write2) begin
+Page fault at 0x8004000000: rights violation error writing page in user context.
+bad-write2: dying due to interrupt 0x0e (#PF Page-Fault Exception).
+Interrupt 0x0e (#PF Page-Fault Exception) at rip=4000f6
+ cr2=0000008004000000 error=               7
+rax 0000008004000000 rbx 0000000000000000 rcx 00000000000000ff rdx 0000000000000000
+rsp 000000004747ff90 rbp 000000004747ff90 rsi 000000000060508e rdi 000000000060517f
+rip 00000000004000f6 r8 0000000000000000  r9 0000000000000000 r10 0000000000000000
+r11 0000000000000206 r12 0000000000000000 r13 0000000000000000 r14 0000000000000000
+r15 0000000000000000 rflags 00000212
+es: 001b ds: 001b cs: 0023 ss: 001b
+Execution of 'bad-write2' complete.
+Timer: 603 ticks
+Thread: 33 idle ticks, 569 kernel ticks, 1 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 80 reads, 232 writes
 hd1:0: 102 reads, 0 writes
-Console: 1760 characters output
-Key
+Console: 1471 characters output
+Keyboard: 0 keys pressed
+Exception: 1 page faults
+Powering off...

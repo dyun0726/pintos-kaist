@@ -97,16 +97,19 @@ struct thread {
 
 	int64_t wakeup_tick;				// 몇 tick 후 wakeup할지
 
-	// priority donation
+	// P1-2-2 priority donation
 	int init_priority; // 처음 priority (donation 종료 후 돌아가기 위함)
 	
 	struct lock *wait_on_lock; // thread가 기다리는(필요한, wait) lock
 	struct list donation_list; // priority를 donate 해준 thread list
 	struct list_elem donation_elem; //donation_list의 elem
 
-	// advanced scheduler
+	// P1-3. advanced scheduler 변수
 	int recent_cpu;
 	int nice;
+
+	// P2-3. system call 관련 변수
+	int exit_status; // process_exit(), wait()에서 필요
 
 
 #ifdef USERPROG
