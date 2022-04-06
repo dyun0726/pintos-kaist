@@ -111,6 +111,8 @@ struct thread {
 	// P2-3. system call 관련 변수
 	int exit_status; // process_exit(), wait()에서 필요
 
+	struct list *fd_list; // file descripter elem의 list
+
 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */

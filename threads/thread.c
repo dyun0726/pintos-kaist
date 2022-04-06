@@ -218,6 +218,15 @@ thread_create (const char *name, int priority,
 	t->tf.cs = SEL_KCSEG;
 	t->tf.eflags = FLAG_IF;
 
+// P2-3 system call fd_list 메모리 할당 및 초기화
+#ifdef USERPROG
+	t -> fd_list = (struct list *) malloc(sizeof(struct list));
+	if (t->fd_list == NULL) {
+		return TID_ERROR;
+	}
+	list_init(t->fd_list);
+
+#endif
 	/* Add to run queue. */
 	thread_unblock (t);
 
@@ -464,6 +473,10 @@ init_thread (struct thread *t, const char *name, int priority) {
 	// advanced scheduler
 	t-> nice = NICE_DEFAULT;
 	t-> recent_cpu = RECENT_CPU_DEFAULT;
+
+	// P2-3 system call
+	// t->exit_status = 0;
+
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should

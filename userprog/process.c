@@ -52,13 +52,13 @@ process_create_initd (const char *file_name) {
 	strlcpy (fn_copy, file_name, PGSIZE);
 
 	// P2-1-3 file_name 토큰화 변수
-	char *save_ptr;
-	strtok_r(file_name, " ", &save_ptr); // run alarm-clock 에서 run 떼고 넘겨주기
-
+	char *save_ptr, *front;
+	front = strtok_r(file_name, " ", &save_ptr); // 'arg-multiple a b c' 에서 맨 앞에거만 넘겨주기
+	// printf("-%s\n", front);
 	/* Create a new thread to execute FILE_NAME. */
 	//file_name 이름으로하고 우선순위 default 인 스레스 생성 및 반환
 	// 스레드는 fn_copy를 인자로 받는 initd 실행
-	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy); 
+	tid = thread_create (front, PRI_DEFAULT, initd, fn_copy); 
 	if (tid == TID_ERROR)
 		palloc_free_page (fn_copy);
 	return tid;
