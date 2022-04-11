@@ -16,26 +16,17 @@ Executing 'wait-killed':
 (wait-killed) begin
 (child-bad) begin
 load: pintos: open failed
-Page fault at 0x4033b1: not present error reading page in user context.
-child-bad: dying due to interrupt 0x0e (#PF Page-Fault Exception).
-Interrupt 0x0e (#PF Page-Fault Exception) at rip=4033b1
- cr2=00000000004033b1 error=               4
-rax ffffffffffffffff rbx 000000800420cdbc rcx 00000000004033b1 rdx 0000000000000000
-rsp 000000004747ff38 rbp 000000004747ff80 rsi 0000000000000000 rdi 0000000000404320
-rip 00000000004033b1 r8 0000000000000000  r9 0000000000000000 r10 0000000000000000
-r11 0000000000000212 r12 000000800420cb5f r13 0000008004249c50 r14 000000020420bdc6
-r15 0000008004249c30 rflags 00000212
-es: 001b ds: 001b cs: 0023 ss: 001b
+child-bad: exit(-1)
 (wait-killed) wait(exec()) = -1
 (wait-killed) end
 wait-killed: exit(0)
 Execution of 'wait-killed' complete.
-Timer: 90 ticks
-Thread: 40 idle ticks, 48 kernel ticks, 2 user ticks
+Timer: 87 ticks
+Thread: 36 idle ticks, 46 kernel ticks, 5 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 171 reads, 448 writes
 hd1:0: 205 reads, 0 writes
-Console: 1640 characters output
+Console: 1012 characters output
 Keyboard: 0 keys pressed
-Exception: 1 page faults
+Exception: 0 page faults
 Powering off...

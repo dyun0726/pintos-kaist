@@ -271,8 +271,10 @@ process_exec (void *f_name) {
 	sema_up(&thread_current()->parent->initd_sema); // initd
 
 	/* If load failed, quit. */
-	if (!success)
+	if (!success){
 		return -1;
+	}
+		
 
 	// P2-1-2 argument stack
 	// 변수 선언
@@ -350,11 +352,9 @@ process_wait (tid_t child_tid UNUSED) {
 	struct list_elem *e;
 	for (e = list_begin(&thread_current()->child_list); e != list_end(&thread_current()->child_list); e = list_next(e)){
 		struct thread *child = list_entry(e, struct thread, child_elem);
-		//printf("wait for \n");
 
 		if (child->tid == child_tid){
 			// 부모는 child가 status 나올때까지 중지
-			//printf("wait if \n");
 			// sema_up(&thread_current()->_do_fork_sema);
 			sema_down(&child->wait_status_sema);
 
@@ -617,6 +617,7 @@ done:
 	if (file != thread_current()->running_file){
 		file_close (file);
 	}
+	//printf("%s", success);
 	return success;
 }
 

@@ -57,12 +57,12 @@ syscall_init (void) {
 void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
-
+	// printf("syscall\n");
 	// P2-3-fork-1 fork 위해 intr_frame f를 parent_if에 복사
 	memcpy(&thread_current()->parent_if, f, sizeof(struct intr_frame));
 
 	// P2-3 system call 구현
-
+	
 	// f에서 레지스터 R 참조
 	// R.rax -> system call number
 	// argument 순서 rdi, rsi, rdx, r10, r8, r9
@@ -189,6 +189,10 @@ int exec (const char *cmd_line){
 	strlcpy(copy, cmd_line, strlen(cmd_line)+1);
 
 	int result = process_exec(copy);
+	if (result == -1){
+		exit(-1);
+	}
+	
 	thread_current() -> exit_status = result;
 
 	return result;
