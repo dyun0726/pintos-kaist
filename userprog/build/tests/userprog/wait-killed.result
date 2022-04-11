@@ -4,6 +4,31 @@ Test output failed to match any acceptable form.
 Acceptable output:
   (wait-killed) begin
   (child-bad) begin
+  child-bad: exit(-1)
+  (wait-killed) wait(exec()) = -1
+  (wait-killed) end
+  wait-killed: exit(0)
+Differences in `diff -u' format:
+  (wait-killed) begin
+  (child-bad) begin
+- child-bad: exit(-1)
++ load: pintos: open failed
++ Page fault at 0x4033b1: not present error reading page in user context.
++ child-bad: dying due to interrupt 0x0e (#PF Page-Fault Exception).
++ Interrupt 0x0e (#PF Page-Fault Exception) at rip=4033b1
++  cr2=00000000004033b1 error=               4
++ rax ffffffffffffffff rbx 000000800420cdbc rcx 00000000004033b1 rdx 0000000000000000
++ rsp 000000004747ff38 rbp 000000004747ff80 rsi 0000000000000000 rdi 0000000000404320
++ rip 00000000004033b1 r8 0000000000000000  r9 0000000000000000 r10 0000000000000000
++ r11 0000000000000212 r12 000000800420cb5f r13 0000008004249c50 r14 000000020420bdc6
++ r15 0000008004249c30 rflags 00000212
++ es: 001b ds: 001b cs: 0023 ss: 001b
+  (wait-killed) wait(exec()) = -1
+  (wait-killed) end
+  wait-killed: exit(0)
+Acceptable output:
+  (wait-killed) begin
+  (child-bad) begin
   load: pintos: open failed
   child-bad: exit(-1)
   (wait-killed) wait(exec()) = -1
@@ -11,25 +36,19 @@ Acceptable output:
   wait-killed: exit(0)
 Differences in `diff -u' format:
   (wait-killed) begin
-- (child-bad) begin
-- load: pintos: open failed
-- child-bad: exit(-1)
-- (wait-killed) wait(exec()) = -1
-- (wait-killed) end
-- wait-killed: exit(0)
-+ system call!
-Acceptable output:
-  (wait-killed) begin
   (child-bad) begin
-  child-bad: exit(-1)
+  load: pintos: open failed
+- child-bad: exit(-1)
++ Page fault at 0x4033b1: not present error reading page in user context.
++ child-bad: dying due to interrupt 0x0e (#PF Page-Fault Exception).
++ Interrupt 0x0e (#PF Page-Fault Exception) at rip=4033b1
++  cr2=00000000004033b1 error=               4
++ rax ffffffffffffffff rbx 000000800420cdbc rcx 00000000004033b1 rdx 0000000000000000
++ rsp 000000004747ff38 rbp 000000004747ff80 rsi 0000000000000000 rdi 0000000000404320
++ rip 00000000004033b1 r8 0000000000000000  r9 0000000000000000 r10 0000000000000000
++ r11 0000000000000212 r12 000000800420cb5f r13 0000008004249c50 r14 000000020420bdc6
++ r15 0000008004249c30 rflags 00000212
++ es: 001b ds: 001b cs: 0023 ss: 001b
   (wait-killed) wait(exec()) = -1
   (wait-killed) end
   wait-killed: exit(0)
-Differences in `diff -u' format:
-  (wait-killed) begin
-- (child-bad) begin
-- child-bad: exit(-1)
-- (wait-killed) wait(exec()) = -1
-- (wait-killed) end
-- wait-killed: exit(0)
-+ system call!

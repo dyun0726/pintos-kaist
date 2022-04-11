@@ -226,6 +226,10 @@ thread_create (const char *name, int priority,
 	}
 	list_init(t->fd_list);
 
+	// P2-3-fork-2 parent thread의 child list 에 현재 thread 추가
+	t->parent = thread_current();
+	list_push_back(&thread_current()->child_list, &t->child_elem);
+
 #endif
 	/* Add to run queue. */
 	thread_unblock (t);
@@ -474,8 +478,15 @@ init_thread (struct thread *t, const char *name, int priority) {
 	t-> nice = NICE_DEFAULT;
 	t-> recent_cpu = RECENT_CPU_DEFAULT;
 
-	// P2-3 system call
-	// t->exit_status = 0;
+#ifdef USERPROG
+	// 2-3-fork 변수 초기화
+	list_init(&t->child_list);
+	sema_init(&t->_do_fork_sema, 0);
+	sema_init(&t->wait_status_sema, 0);
+	sema_init(&t->exit_child_sema, 0);
+	sema_init(&t->initd_sema, 0);
+
+#endif
 
 }
 

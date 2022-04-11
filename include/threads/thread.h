@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/interrupt.h"
+#include "threads/synch.h" // p2-3-fork 에서 sema 사용
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -104,14 +105,31 @@ struct thread {
 	struct list donation_list; // priority를 donate 해준 thread list
 	struct list_elem donation_elem; //donation_list의 elem
 
-	// P1-3. advanced scheduler 변수
+	// P1-3 advanced scheduler 변수
 	int recent_cpu;
 	int nice;
 
-	// P2-3. system call 관련 변수
+	// P2-3 system call 관련 변수
 	int exit_status; // process_exit(), wait()에서 필요
 
 	struct list *fd_list; // file descripter elem의 list
+
+	// P2-3-fork-0 fork 관련 변수
+	struct list child_list; // children thread list
+	struct list_elem child_elem; // child_list 들어갈때 list_elem
+	struct intr_frame parent_if; // fork 할때 넘겨줄 intr_frame
+	struct semaphore _do_fork_sema; // 나는 do_fork 중
+	struct thread *parent; // parent thread 저장 변수 thread_create에서 저장
+
+	// P2-3 thread가 execute 한 파일 저장 변수
+	struct file *running_file;
+	
+	struct semaphore wait_status_sema; // child의 exit_status 받기 기다리게하는 sema
+	struct semaphore exit_child_sema; // child가 종료되게 하는 sema
+
+	struct semaphore initd_sema; //initd 에서 사용할 sema
+
+
 
 
 #ifdef USERPROG

@@ -14,7 +14,8 @@
 #include "filesys/filesys.h" // filesys_create() , filesys_remove() 함수
 #include "filesys/file.h" // close()
 #include "devices/input.h" // input_getc()
-
+#include <string.h> // memcpy()
+#include "userprog/process.h" // pid_t
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -57,7 +58,10 @@ void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
 
-	// P2-3-1 system call 구현
+	// P2-3-fork-1 fork 위해 intr_frame f를 parent_if에 복사
+	memcpy(&thread_current()->parent_if, f, sizeof(struct intr_frame));
+
+	// P2-3 system call 구현
 
 	// f에서 레지스터 R 참조
 	// R.rax -> system call number
@@ -71,11 +75,14 @@ syscall_handler (struct intr_frame *f UNUSED) {
 		case SYS_EXIT:
 			exit(f->R.rdi);
 			break;
-		// case SYS_FORK:
-		// 	break;
-		// case SYS_EXEC:
-		// 	break;
-		// case SYS_WAIT:
+		case SYS_FORK:
+			f->R.rax = fork(f->R.rdi);
+			break;
+		case SYS_EXEC:
+			f->R.rax = exec(f->R.rdi);
+			break;
+		case SYS_WAIT:
+			f->R.rax = wait(f->R.rdi);
 			break;
 		case SYS_CREATE:
 			f->R.rax = create(f->R.rdi, f->R.rsi);
@@ -95,10 +102,12 @@ syscall_handler (struct intr_frame *f UNUSED) {
 		case SYS_WRITE:
 			f->R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
 			break;
-		// case SYS_SEEK:
-		// 	break;
-		// case SYS_TELL:
-		// 	break;
+		case SYS_SEEK:
+			seek(f->R.rdi, f->R.rsi);
+			break;
+		case SYS_TELL:
+			f->R.rax = tell(f->R.rdi);
+			break;
 		case SYS_CLOSE:
 			close(f->R.rdi);
 			break;
@@ -134,6 +143,60 @@ void exit (int status){
 	t->exit_status = status;
 	printf("%s: exit(%d)\n", t->name, status); //process termination message
 	thread_exit();
+}
+
+// P2-3-fork-2 현재 프로세스 fork 해서 자식 프로세스 생성
+pid_t fork (const char *thread_name){
+	check_address(thread_name);
+
+	pid_t child_pid = (pid_t) process_fork(thread_name, &thread_current()->parent_if);
+	// printf("%d \n", child_pid);
+
+	if (child_pid == TID_ERROR){
+		return TID_ERROR;
+	}
+
+	struct thread *child = NULL;
+	struct list_elem *e;
+
+	for (e = list_begin(&thread_current()->child_list); e != list_end(&thread_current()->child_list); e=list_next(e)){
+		struct thread *tmp = list_entry(e, struct thread, child_elem);
+		if (tmp->tid == child_pid){
+			child = tmp;
+			break;
+		}
+	}
+
+	if (child == NULL){ // process_fork
+		return TID_ERROR;
+	} else {
+		// P2-3-fork-3 do_fork가 실행 되서 sema_up 될때까지 기다리기
+		sema_down(&child->_do_fork_sema);
+
+		if (child->exit_status == TID_ERROR)
+			return TID_ERROR;
+
+	}
+	
+	return child_pid;
+}
+
+// 현재 프로세스를 cmd_line으로 변경 
+int exec (const char *cmd_line){
+	check_address(cmd_line);
+
+	char *copy = (char *) malloc(strlen(cmd_line)+1);
+	strlcpy(copy, cmd_line, strlen(cmd_line)+1);
+
+	int result = process_exec(copy);
+	thread_current() -> exit_status = result;
+
+	return result;
+}
+
+// P2-3-wait-1 함수
+int wait (pid_t pid){
+	return process_wait((tid_t) pid);
 }
 
 // file 이름으로 initial_size로 크기
@@ -304,6 +367,16 @@ void close (int fd){
 		free(close_fd_list_elem); 
 	}
 
+}
+
+// fd의 file 수정 위치 position으로 이동
+void seek (int fd, unsigned position){
+	file_seek(fd_to_file(fd), position); //file.c
+}
+
+// fd의 file 수정 위치 반환
+unsigned tell (int fd){
+	return (unsigned) file_tell(fd_to_file(fd)); //file.c
 }
 
 // fd 비교 함수
