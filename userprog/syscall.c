@@ -57,7 +57,6 @@ syscall_init (void) {
 void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
-	// printf("syscall\n");
 	// P2-3-fork-1 fork 위해 intr_frame f를 parent_if에 복사
 	memcpy(&thread_current()->parent_if, f, sizeof(struct intr_frame));
 
@@ -67,7 +66,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
 	// R.rax -> system call number
 	// argument 순서 rdi, rsi, rdx, r10, r8, r9
 	// system call 함수 반환 값 rax에 저장
-	// printf("-----%d \n", f->R.rax);
+
 	switch (f->R.rax) {
 		case SYS_HALT:
 			halt();
@@ -126,7 +125,6 @@ syscall_handler (struct intr_frame *f UNUSED) {
 // pointer 제대로 mapping 되어 있나?
 void check_address (void *addr){
 	if (!is_user_vaddr(addr) || !pml4_get_page(thread_current()->pml4, addr)){
-
 		exit(-1);
 	}
 }
@@ -141,13 +139,15 @@ void halt (void){
 void exit (int status){
 	struct thread *t = thread_current();
 	t->exit_status = status;
-	printf("%s: exit(%d)\n", t->name, status); //process termination message
+	//P2-4 process termination message
+	printf("%s: exit(%d)\n", t->name, status); 
 	thread_exit();
 }
 
 // P2-3-fork-2 현재 프로세스 fork 해서 자식 프로세스 생성
 pid_t fork (const char *thread_name){
 	check_address(thread_name);
+	// printf("first fork : %d", thread_current()->running_file);
 
 	pid_t child_pid = (pid_t) process_fork(thread_name, &thread_current()->parent_if);
 	// printf("%d \n", child_pid);
@@ -157,15 +157,13 @@ pid_t fork (const char *thread_name){
 	}
 
 	struct thread *child = NULL;
-	struct list_elem *e;
-
-	for (e = list_begin(&thread_current()->child_list); e != list_end(&thread_current()->child_list); e=list_next(e)){
+	for (struct list_elem *e = list_begin(&thread_current()->child_list); e != list_end(&thread_current()->child_list); e=list_next(e)){
 		struct thread *tmp = list_entry(e, struct thread, child_elem);
 		if (tmp->tid == child_pid){
 			child = tmp;
 			break;
 		}
-	}
+	} // child fork 하고 찾기
 
 	if (child == NULL){ // process_fork
 		return TID_ERROR;
@@ -175,9 +173,9 @@ pid_t fork (const char *thread_name){
 
 		if (child->exit_status == TID_ERROR)
 			return TID_ERROR;
-
-	}
-	
+		
+		sema_up(&thread_current()->_do_fork_sema); // 추추가
+	}	
 	return child_pid;
 }
 
@@ -189,12 +187,12 @@ int exec (const char *cmd_line){
 	strlcpy(copy, cmd_line, strlen(cmd_line)+1);
 
 	int result = process_exec(copy);
+	free(copy);
 	if (result == -1){
 		exit(-1);
 	}
 	
 	thread_current() -> exit_status = result;
-
 	return result;
 }
 
@@ -247,12 +245,7 @@ int open (const char *file){
 
 	if (file_open == NULL){ //open 에러
 		return -1;
-	} else if (list_size(thread_current()->fd_list) > 130){ // 파일을 너무 많이 열면 에러
-		lock_acquire(&syscall_lock);
-		file_close(file_open);
-		lock_release(&syscall_lock);
-		return -1;
-	} else {
+	} else if (list_size(thread_current()->fd_list) <= 130) {
 		struct fd_list_elem *fd_elem = malloc(sizeof(struct fd_list_elem));
 
 		fd_elem -> fd = current_fd;
@@ -269,8 +262,11 @@ int open (const char *file){
 
 		return fd_elem -> fd;
 
-
-
+	} else { //파일 너무 많이 열면 에러
+		lock_acquire(&syscall_lock);
+		file_close(file_open);
+		lock_release(&syscall_lock);
+		return -1;
 	}
 
 }
@@ -353,7 +349,6 @@ void close (int fd){
 		struct fd_list_elem *tmp = list_entry(e, struct fd_list_elem, elem);
 		if (fd == tmp->fd){
 			close_fd_list_elem = tmp;
-			// find_fd = true;
 			break;
 		}
 	}
@@ -385,7 +380,6 @@ unsigned tell (int fd){
 
 // fd 비교 함수
 static bool fd_cmp(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED){
-	
 	return (list_entry(a, struct fd_list_elem, elem) -> fd < list_entry(b, struct fd_list_elem, elem) -> fd);
 }
 

@@ -484,7 +484,6 @@ init_thread (struct thread *t, const char *name, int priority) {
 	sema_init(&t->_do_fork_sema, 0);
 	sema_init(&t->wait_status_sema, 0);
 	sema_init(&t->exit_child_sema, 0);
-	sema_init(&t->initd_sema, 0);
 
 #endif
 

@@ -52,28 +52,15 @@ process_create_initd (const char *file_name) {
 	strlcpy (fn_copy, file_name, PGSIZE);
 
 	// P2-1-3 file_name 토큰화 변수
-	char *save_ptr, *front;
-	front = strtok_r(file_name, " ", &save_ptr); // 'arg-multiple a b c' 에서 맨 앞에거만 넘겨주기
-	// printf("-%s\n", front);
+	char *save_ptr;
+	strtok_r(file_name, " ", &save_ptr); // 'arg-multiple a b c' 에서 맨 앞에거만 넘겨주기
 
 	/* Create a new thread to execute FILE_NAME. */
 	//file_name 이름으로하고 우선순위 default 인 스레스 생성 및 반환
 	// 스레드는 fn_copy를 인자로 받는 initd 실행
-	tid = thread_create (front, PRI_DEFAULT, initd, fn_copy); 
+	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy); 
 	if (tid == TID_ERROR)
 		palloc_free_page (fn_copy);
-	
-	sema_down(&thread_current()->initd_sema);
-
-	// exit(-1)로 종료된 자식 스레드가 있는 경우 대기
-	// struct list_elem * index_elem;
-	// for (index_elem = list_begin(&thread_current()->child_list); index_elem != list_end(&thread_current()->child_list);
-	//  index_elem = list_next(index_elem)) {
-	// 	struct thread * exit_child_thread = list_entry(index_elem, struct thread, child_elem);
-	// 	if (exit_child_thread->exit_status == -1) {
-	// 		return process_wait(tid);
-	// 	}
-	// }
 
 	return tid;
 }
@@ -96,10 +83,8 @@ initd (void *f_name) {
  * TID_ERROR if the thread cannot be created. */
 tid_t
 process_fork (const char *name, struct intr_frame *if_ UNUSED) {
-	/* Clone current thread to new thread.*/
-	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, thread_current());
-
-	return tid;
+	//* Clone current thread to new thread.*/
+	return thread_create (name, PRI_DEFAULT, __do_fork, thread_current());
 }
 
 #ifndef VM
@@ -208,6 +193,7 @@ __do_fork (void *aux) {
 		dup->fd = tmp->fd;
 		list_push_back(current->fd_list, &dup->elem);
 	} // current의 fd_list에 복제 완료
+	// printf("current : %d\n", current->running_file);
 
 	process_init ();
 
@@ -216,15 +202,15 @@ __do_fork (void *aux) {
 	// 복제 끝났으므로 current (child) 그만 기다려도됨
 	sema_up(&current->_do_fork_sema);
 	// parent는 do_fork 끝날때 까지 block
-	// sema_down(&parent->_do_fork_sema);
+	sema_down(&parent->_do_fork_sema); // 추추가
 
 	/* Finally, switch to the newly created process. */
 	if (succ)
 		do_iret (&if_);
 error:
-	current->exit_status = TID_ERROR;
 	sema_up(&current->_do_fork_sema);
-	// sema_down(&parent->_do_fork_sema);
+	current->exit_status = TID_ERROR;
+	sema_down(&parent->_do_fork_sema); // 추추가
 	thread_exit ();
 }
 
@@ -249,10 +235,7 @@ process_exec (void *f_name) {
 		parsing = strtok_r(NULL, " ", &save);
 		argc = argc + 1;
 		argv[argc] = parsing;
-		//printf("%d : %s \n", argc, parsing);
 	}
-	// printf("argv[0] : %s \n", argv[0]);
-	// printf("check %d, %s \n", argc, argv[argc]);
 
 	/* We cannot use the intr_frame in the thread structure.
 	 * This is because when current thread rescheduled,
@@ -266,27 +249,20 @@ process_exec (void *f_name) {
 	process_cleanup ();
 
 	/* And then load the binary */
-	success = load (argv[0], &_if); // P2-1-1 file_name이 아니라 argv[0] load
+	success = load(argv[0], &_if); // P2-1-1 file_name이 아니라 argv[0] load
 
-	sema_up(&thread_current()->parent->initd_sema); // initd
+	//sema_up(&thread_current()->parent->initd_sema); // initd
 
 	/* If load failed, quit. */
-	if (!success){
-		return -1;
-	}
-		
+	if (!success){ return -1;}
 
 	// P2-1-2 argument stack
 	// 변수 선언
 	int arg_len = 0; // alignment 하기위해 arg 차지하는 byte 필요
 	char *arg_addr[64]; // stack에서 각 arg 주소 저장 배열
 	
-	// printf("%s \n", argv[0]);
 	for (int i = argc -1; i >= 0; i--){
-		// printf("arg[i] : %s \n", argv[i]);
-		// printf("strlen : %d \n", strlen(argv[i])+1);
 		int len = strlen(argv[i]) + 1; // \0도 포함하기위해 +1
-
 		arg_len = arg_len + len; // 각 arg 길이 합계
 		// _if.rsp는 현재 위치 가리키는 stack pointer
 		_if.rsp = _if.rsp - len; // user stack의 상단부터 argv[i] 크기만큼 이동
@@ -320,9 +296,8 @@ process_exec (void *f_name) {
 	// stack 확인 함수
 
 	/* Start switched process. */
-	// printf("-----do_iret before \n");
 	do_iret (&_if);
-	palloc_free_page (file_name); // hs는 do_iret 밑이였음? 왜?
+	palloc_free_page (file_name);
 	NOT_REACHED ();
 }
 
@@ -341,14 +316,12 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
-	//while(1);
+
+	// while(1);
 	// for (int i = 0; i<1000000000; i++); //fork 완성 전까지 무한루프해제
 	
 	// P2-3-wait-2
 	// child_tid 의 스레드를 찾아서 기다리고 종료되면 child_list에서 제거
-
-	//printf("wait start \n");
-
 	struct list_elem *e;
 	for (e = list_begin(&thread_current()->child_list); e != list_end(&thread_current()->child_list); e = list_next(e)){
 		struct thread *child = list_entry(e, struct thread, child_elem);
@@ -398,12 +371,13 @@ process_exit (void) {
 			child->parent = NULL;
 		}
 	}
+
+	process_cleanup();
+
 	// 3.자식의 status 확정됬으니 wait_status semaphore up
 	sema_up(&curr->wait_status_sema);
 	// 4. 부모한테 status 넘겨 주고 free 해야되니까 sema_down; process_wait()에서 풀어줌
 	sema_down(&curr->exit_child_sema);
-
-	process_cleanup ();
 }
 
 /* Free the current process's resources. */
@@ -617,7 +591,6 @@ done:
 	if (file != thread_current()->running_file){
 		file_close (file);
 	}
-	//printf("%s", success);
 	return success;
 }
 

@@ -127,10 +127,6 @@ struct thread {
 	struct semaphore wait_status_sema; // child의 exit_status 받기 기다리게하는 sema
 	struct semaphore exit_child_sema; // child가 종료되게 하는 sema
 
-	struct semaphore initd_sema; //initd 에서 사용할 sema
-
-
-
 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
