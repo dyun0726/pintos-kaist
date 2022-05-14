@@ -74,8 +74,9 @@ initd (void *f_name) {
 
 	process_init ();
 
-	if (process_exec (f_name) < 0)
+	if (process_exec (f_name) < 0){
 		PANIC("Fail to launch initd\n");
+	}
 	NOT_REACHED ();
 }
 
@@ -248,13 +249,21 @@ process_exec (void *f_name) {
 	/* We first kill the current context */
 	process_cleanup ();
 
+	// P3-1 추가
+	#ifdef VM
+		supplemental_page_table_init(&thread_current()->spt);
+	#endif
+
 	/* And then load the binary */
 	success = load(argv[0], &_if); // P2-1-1 file_name이 아니라 argv[0] load
 
 	//sema_up(&thread_current()->parent->initd_sema); // initd
 
 	/* If load failed, quit. */
-	if (!success){ return -1;}
+	if (!success){ 
+			//printf("load failed\n");
+			return -1;
+	}
 
 	// P2-1-2 argument stack
 	// 변수 선언
@@ -564,8 +573,10 @@ load (const char *file_name, struct intr_frame *if_) {
 						zero_bytes = ROUND_UP (page_offset + phdr.p_memsz, PGSIZE);
 					}
 					if (!load_segment (file, file_page, (void *) mem_page,
-								read_bytes, zero_bytes, writable))
-						goto done;
+								read_bytes, zero_bytes, writable)){
+									// printf("fail to load_segment\n");
+									goto done;
+								}
 				}
 				else
 					goto done;
@@ -748,6 +759,26 @@ lazy_load_segment (struct page *page, void *aux) {
 	/* TODO: Load the segment from the file */
 	/* TODO: This called when the first page fault occurs on address VA. */
 	/* TODO: VA is available when calling this function. */
+	// P3-2-3 lazy_load_segment 내부 구현
+	// segment를 파일에서 불러오기, 이 함수는 첫번째 page fault 발생시 호출됨
+	
+	uint8_t *pa = (page->frame)->kva; //실제 메모리 주소
+	struct page_load_info *args = aux;
+	uint32_t read_bytes = args->read_bytes;
+
+	//파일에서 ofs만큼 커서이동 후 파일 읽기
+	file_seek(args->file, args->ofs);
+	uint32_t real_read_bytes = (uint32_t) file_read(args->file, pa, read_bytes);
+	
+	// 만약 실제 읽은 bytes랑 읽어햐하는 bytes 다르면 free and return false
+	if (real_read_bytes != read_bytes){
+		palloc_free_page(pa);
+		return false;
+	} else { // 같으면 0으로 zero_bytes만큼 초기화
+		memset(pa+read_bytes, 0, args->zero_bytes);
+		return true;
+	}
+
 }
 
 /* Loads a segment starting at offset OFS in FILE at address
@@ -779,10 +810,28 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
 		/* TODO: Set up aux to pass information to the lazy_load_segment. */
-		void *aux = NULL;
+		// P3-2-2 load_segment 함수 구현
+		// project 2에선 바로 로드 했음 but project3에선
+		// lazy_loading 구현 위해서 vm_alloc_page_with_initaializer 함수 호출
+		// 이때 aux로 필요한 정보 넘겨주기
+
+		// aux 설정
+		struct page_load_info *aux = (struct page_load_info *) malloc(sizeof(struct page_load_info));
+		aux->file = file;
+		aux->ofs = ofs;
+		aux->read_bytes = page_read_bytes;
+		aux->zero_bytes = page_zero_bytes;
+
+		// ofs 업데이트
+		ofs += page_read_bytes;
+		// printf("%d\n", ofs);
+
 		if (!vm_alloc_page_with_initializer (VM_ANON, upage,
-					writable, lazy_load_segment, aux))
+					writable, lazy_load_segment, aux)){
+			//printf("load segment vm_alloc fail\n");
 			return false;
+		}
+			
 
 		/* Advance. */
 		read_bytes -= page_read_bytes;
@@ -802,6 +851,26 @@ setup_stack (struct intr_frame *if_) {
 	 * TODO: If success, set the rsp accordingly.
 	 * TODO: You should mark the page is stack. */
 	/* TODO: Your code goes here */
+	// P3-2-4 setup stack 수정
+	// 첫번째 stack은 lazy loading 필요 없음. 바로 alloc, claim 호출
+	bool alloc_succ = vm_alloc_page(VM_ANON|VM_MARKER_0, stack_bottom, true);
+	if (!alloc_succ){
+		// 에러나면 페이지 탐색 후 메모리 해제
+		struct page *fail_page = spt_find_page(&thread_current()->spt, stack_bottom);
+		palloc_free_page(fail_page);
+		return false;
+	}
+
+	bool claim_succ = vm_claim_page(stack_bottom);
+	if (!claim_succ){
+		struct page *fail_page = spt_find_page(&thread_current()->spt, stack_bottom);
+		palloc_free_page(fail_page);
+		return false;
+	}
+
+	memset(stack_bottom, 0, PGSIZE);
+	success = true;
+	if_->rsp = USER_STACK;
 
 	return success;
 }

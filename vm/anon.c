@@ -49,4 +49,12 @@ anon_swap_out (struct page *page) {
 static void
 anon_destroy (struct page *page) {
 	struct anon_page *anon_page = &page->anon;
+	
+	// P3-2-9 anon_destory 내부 구현
+	if (page->frame != NULL){
+		free(page->frame);
+	}
+	if (anon_page->aux != NULL){
+		free(anon_page->aux);
+	}
 }
