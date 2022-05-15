@@ -20,7 +20,7 @@ Executing 'mmap-overlap':
 system call!
 Execution of 'mmap-overlap' complete.
 Timer: 88 ticks
-Thread: 33 idle ticks, 51 kernel ticks, 4 user ticks
+Thread: 34 idle ticks, 53 kernel ticks, 1 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 111 reads, 276 writes
 hd1:0: 119 reads, 0 writes

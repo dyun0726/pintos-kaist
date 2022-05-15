@@ -19,8 +19,8 @@ Executing 'mmap-ro':
 (mmap-ro) mmap "large.txt" with writable=0
 system call!
 Execution of 'mmap-ro' complete.
-Timer: 187 ticks
-Thread: 79 idle ticks, 107 kernel ticks, 1 user ticks
+Timer: 190 ticks
+Thread: 83 idle ticks, 105 kernel ticks, 2 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 111 reads, 8074 writes
 hd1:0: 4018 reads, 0 writes

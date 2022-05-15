@@ -4,15 +4,6 @@ Test output failed to match any acceptable form.
 Acceptable output:
   (mmap-bad-fd) begin
   (mmap-bad-fd) try to mmap invalid fd
-  mmap-bad-fd: exit(-1)
-Differences in `diff -u' format:
-  (mmap-bad-fd) begin
-  (mmap-bad-fd) try to mmap invalid fd
-- mmap-bad-fd: exit(-1)
-+ system call!
-Acceptable output:
-  (mmap-bad-fd) begin
-  (mmap-bad-fd) try to mmap invalid fd
   (mmap-bad-fd) end
   mmap-bad-fd: exit(0)
 Differences in `diff -u' format:
@@ -20,4 +11,13 @@ Differences in `diff -u' format:
   (mmap-bad-fd) try to mmap invalid fd
 - (mmap-bad-fd) end
 - mmap-bad-fd: exit(0)
++ system call!
+Acceptable output:
+  (mmap-bad-fd) begin
+  (mmap-bad-fd) try to mmap invalid fd
+  mmap-bad-fd: exit(-1)
+Differences in `diff -u' format:
+  (mmap-bad-fd) begin
+  (mmap-bad-fd) try to mmap invalid fd
+- mmap-bad-fd: exit(-1)
 + system call!

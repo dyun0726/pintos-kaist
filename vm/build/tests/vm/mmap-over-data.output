@@ -19,8 +19,8 @@ Executing 'mmap-over-data':
 (mmap-over-data) try to mmap over data segment
 system call!
 Execution of 'mmap-over-data' complete.
-Timer: 83 ticks
-Thread: 34 idle ticks, 47 kernel ticks, 2 user ticks
+Timer: 84 ticks
+Thread: 32 idle ticks, 50 kernel ticks, 2 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 111 reads, 250 writes
 hd1:0: 106 reads, 0 writes

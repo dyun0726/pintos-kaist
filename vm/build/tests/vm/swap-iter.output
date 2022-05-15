@@ -4,7 +4,7 @@ Kernel command line: -q -f put swap-iter put large.txt run swap-iter
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x9e0000 (Usable: 9,088 kB)
-Calibrating timer...  157,081,600 loops/s.
+Calibrating timer...  132,505,600 loops/s.
 hd0:0: detected 329 sector (164 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1:0: detected 7,932 sector (3 MB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -19,12 +19,12 @@ Executing 'swap-iter':
 (swap-iter) write sparsely over page 512
 (swap-iter) write sparsely over page 1024
 Kernel PANIC at ../../vm/vm.c:180 in vm_get_frame(): TODO
-Call stack: 0x800421870b 0x8004221898 0x8004221afd 0x8004221a34 0x800421d4b1 0x8004209684 0x8004209aa2 0x400e2e 0x400e77.
+Call stack: 0x800421870b 0x8004221874 0x8004221ad9 0x8004221a10 0x800421d4b1 0x8004209684 0x8004209aa2 0x400e2e 0x400e77.
 The `backtrace' program can make call stacks useful.
 Read "Backtraces" in the "Debugging Tools" chapter
 of the Pintos documentation for more information.
-Timer: 365 ticks
-Thread: 140 idle ticks, 180 kernel ticks, 45 user ticks
+Timer: 327 ticks
+Thread: 124 idle ticks, 156 kernel ticks, 47 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 116 reads, 15902 writes
 hd1:0: 7932 reads, 0 writes

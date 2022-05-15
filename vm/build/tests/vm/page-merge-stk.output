@@ -21,8 +21,10 @@ Executing 'page-merge-stk':
 load: child-qsort: open failed
 child-qsort: exit(-1)
 (page-merge-stk) sort chunk 2
-(page-merge-stk) sort chunk 3
+load: child-qsort: open failed
 child-qsort: exit(-1)
+(page-merge-stk) sort chunk 3
+load: child-qsort: open failed
 child-qsort: exit(-1)
 (page-merge-stk) sort chunk 4
 load: child-qsort: open failed
@@ -40,13 +42,13 @@ child-qsort: exit(-1)
 (page-merge-stk) wait for child 0: FAILED
 page-merge-stk: exit(1)
 Execution of 'page-merge-stk' complete.
-Timer: 250 ticks
-Thread: 67 idle ticks, 65 kernel ticks, 118 user ticks
+Timer: 247 ticks
+Thread: 71 idle ticks, 63 kernel ticks, 114 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 435 reads, 4678 writes
+hd0:1: 391 reads, 4678 writes
 hd1:0: 224 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1682 characters output
+Console: 1744 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

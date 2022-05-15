@@ -60,6 +60,8 @@ syscall_handler (struct intr_frame *f UNUSED) {
 	// P2-3-fork-1 fork 위해 intr_frame f를 parent_if에 복사
 	memcpy(&thread_current()->parent_if, f, sizeof(struct intr_frame));
 
+	// printf("syscall\n");
+
 	// P2-3 system call 구현
 	
 	// f에서 레지스터 R 참조
@@ -124,7 +126,8 @@ syscall_handler (struct intr_frame *f UNUSED) {
 // 주어진 포인터가 user memory 가르키는지 확인 (kern_base - 0)
 // pointer 제대로 mapping 되어 있나?
 void check_address (void *addr){
-	if (!is_user_vaddr(addr) || !pml4_get_page(thread_current()->pml4, addr)){
+	//if (!is_user_vaddr(addr) || !pml4_get_page(thread_current()->pml4, addr)){
+	if (!is_user_vaddr(addr)){
 		exit(-1);
 	}
 }
@@ -206,7 +209,8 @@ bool create (const char *file, unsigned initial_size){
 	check_address(file); // pointer 니까 check
 
 	if (file == NULL){
-		return false;
+		exit(-1);
+		//return false;
 	}
 
 	lock_acquire(&syscall_lock); // synchronization
@@ -285,7 +289,9 @@ int filesize (int fd){
 
 // read 함수 fd 구별 해서 작동
 int read (int fd, void *buffer, unsigned size){
+	// printf("read first\n");
 	check_address(buffer);
+	// printf("check succ\n");
 	int count = 0;
 
 	if (fd == 0) { // 0(STDIN)일때 input_getc

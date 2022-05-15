@@ -4,6 +4,15 @@ Test output failed to match any acceptable form.
 Acceptable output:
   (mmap-bad-fd3) begin
   (mmap-bad-fd3) try to mmap stdout
+  mmap-bad-fd3: exit(-1)
+Differences in `diff -u' format:
+  (mmap-bad-fd3) begin
+  (mmap-bad-fd3) try to mmap stdout
+- mmap-bad-fd3: exit(-1)
++ system call!
+Acceptable output:
+  (mmap-bad-fd3) begin
+  (mmap-bad-fd3) try to mmap stdout
   (mmap-bad-fd3) end
   mmap-bad-fd3: exit(0)
 Differences in `diff -u' format:
@@ -11,13 +20,4 @@ Differences in `diff -u' format:
   (mmap-bad-fd3) try to mmap stdout
 - (mmap-bad-fd3) end
 - mmap-bad-fd3: exit(0)
-+ system call!
-Acceptable output:
-  (mmap-bad-fd3) begin
-  (mmap-bad-fd3) try to mmap stdout
-  mmap-bad-fd3: exit(-1)
-Differences in `diff -u' format:
-  (mmap-bad-fd3) begin
-  (mmap-bad-fd3) try to mmap stdout
-- mmap-bad-fd3: exit(-1)
 + system call!
