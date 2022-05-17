@@ -1,2 +1,28 @@
 FAIL
-run: mmap "large.txt": FAILED
+Kernel panic in run: PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
+Call stack: 0x800421870b 0x800421d3ba 0x8004209684 0x8004209aa2 0x800421f94c 0x800421c56d 0x8004207334 0x800421d9dd 0x800421d4c6 0x8004209684 0x8004209aa2 0x8004222cca 0x8004221ef5 0x80042223f8 0x800421acd9 0x800421ad5c 0x8004222424 0x800421c6bd 0x800421c657 0x8004207334 0x800421d9dd 0x800421d6af 0x800421d53b 0x400ddc
+Translation of call stack:
+0x000000800421870b: debug_panic (lib/kernel/debug.c:32)
+0x000000800421d3ba: kill (userprog/exception.c:103)
+0x0000008004209684: intr_handler (threads/interrupt.c:352)
+0x0000008004209aa2: intr_entry (threads/intr-stubs.o:?)
+0x000000800421f94c: file_close (filesys/file.c:56)
+0x000000800421c56d: process_exit (userprog/process.c:370)
+0x0000008004207334: thread_exit (threads/thread.c:326)
+0x000000800421d9dd: fork (userprog/syscall.c:165)
+0x000000800421d4c6: page_fault (userprog/exception.c:146)
+0x0000008004209684: intr_handler (threads/interrupt.c:352)
+0x0000008004209aa2: intr_entry (threads/intr-stubs.o:?)
+0x0000008004222cca: file_backed_destroy (vm/file.c:95)
+0x0000008004221ef5: vm_dealloc_page (vm/vm.c:311)
+0x00000080042223f8: spt_destroy_func (vm/vm.c:434)
+0x000000800421acd9: hash_clear (lib/kernel/hash.c:58)
+0x000000800421ad5c: hash_destroy (lib/kernel/hash.c:84)
+0x0000008004222424: supplemental_page_table_kill (vm/vm.c:445)
+0x000000800421c6bd: process_cleanup (userprog/process.c:404)
+0x000000800421c657: process_exit (userprog/process.c:387)
+0x0000008004207334: thread_exit (threads/thread.c:326)
+0x000000800421d9dd: fork (userprog/syscall.c:165)
+0x000000800421d6af: syscall_handler (userprog/syscall.c:81)
+0x000000800421d53b: no_sti (userprog/syscall-entry.o:?)
+0x0000000000400ddc: (unknown)

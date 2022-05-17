@@ -114,10 +114,12 @@ do_mmap (void *addr, size_t length, int writable,
 	// P3-4-2 do_mmap 구현 (syscall.c mmap 함수서 호출)
 	// load_segment의 file 형태
 
-	// ASSERT(addr != NULL);
-	// ASSERT(length != 0);
-	// ASSERT(file != NULL);
-	// ASSERT(pg_round_down(addr) == addr);
+	// printf("addr: %d\n", addr);
+	// printf("do mmap file length : %d\n", file_length(file));
+	ASSERT(addr != NULL);
+	ASSERT(length != 0);
+	ASSERT(file != NULL);
+	ASSERT(pg_round_down(addr) == addr);
 
 	// 읽어야할 bytes 수
 	uint32_t real_read_bytes;

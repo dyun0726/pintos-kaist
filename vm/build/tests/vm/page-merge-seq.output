@@ -86,8 +86,8 @@ child-sort: exit(123)
 (page-merge-seq) end
 page-merge-seq: exit(0)
 Execution of 'page-merge-seq' complete.
-Timer: 408 ticks
-Thread: 96 idle ticks, 77 kernel ticks, 235 user ticks
+Timer: 383 ticks
+Thread: 57 idle ticks, 86 kernel ticks, 240 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 4902 reads, 4640 writes
 hd1:0: 216 reads, 0 writes

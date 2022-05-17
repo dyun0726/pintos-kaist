@@ -416,7 +416,7 @@ void *mmap (void *addr, size_t length, int writable, int fd, off_t offset){
 	if ( is_kernel_vaddr(addr) ){ // addr가 kernel address면 fail
 		return NULL;
 	}
-	if ( addr = NULL || (pg_round_down(addr)!= addr)){
+	if ( addr == NULL || (pg_round_down(addr)!= addr)){
 		return NULL;
 	}
 
@@ -438,11 +438,13 @@ void *mmap (void *addr, size_t length, int writable, int fd, off_t offset){
 	if (fd_file == NULL){ // fd로 file 못찾으면 fail
 		return NULL;
 	}
-	
+	// printf("addr: %d\n", addr);
+	// printf("file_length: %d\n", file_length(fd_file));
 	// file 크기가 0, offset이 file 크기보다 크면 fail
 	if (file_length(fd_file) == 0 || file_length(fd_file) <= offset){
 		return NULL;
 	}
+	// printf("do mmap before!\n");
 
 	return do_mmap(addr, length, writable, fd_file, offset);
 
