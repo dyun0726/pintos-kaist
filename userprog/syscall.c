@@ -16,6 +16,7 @@
 #include "devices/input.h" // input_getc()
 #include <string.h> // memcpy()
 #include "userprog/process.h" // pid_t
+#include "vm/file.h" // do_mmap, do_munmap
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -60,7 +61,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
 	// P2-3-fork-1 fork 위해 intr_frame f를 parent_if에 복사
 	memcpy(&thread_current()->parent_if, f, sizeof(struct intr_frame));
 
-	// printf("syscall\n");
+	// printf("syscall, rax = %d\n", f->R.rax);
 
 	// P2-3 system call 구현
 	
@@ -112,6 +113,19 @@ syscall_handler (struct intr_frame *f UNUSED) {
 		case SYS_CLOSE:
 			close(f->R.rdi);
 			break;
+		// project 3추가
+		// P3-4-1 mmap, munmap 추가
+//#ifdef VM
+		case SYS_MMAP:
+			// printf("sys_mmap\n");
+			f->R.rax = mmap(f->R.rdi, f->R.rsi, f->R.rdx, f->R.r10, f->R.r8);
+			break;
+		case SYS_MUNMAP:
+			// printf("sys_munmap\n");
+			munmap(f->R.rdi);
+			break;
+
+//#endif
 
 		default:
 			printf ("system call!\n");
@@ -301,9 +315,17 @@ int read (int fd, void *buffer, unsigned size){
 
 		return count; 
 	} else if (fd == 1) {// 1(STDOUT) 일때 return -1
+		exit(-1);
 		return -1;
 	} else {
 		struct file *fd_file = fd_to_file(fd); //fd로 file 변환
+
+		// P3 pt-write-code2 PASS 수정
+		#ifdef VM
+		if (spt_find_page(&thread_current()->spt, buffer) != NULL && spt_find_page(&thread_current()->spt, buffer)->writable == 0){
+			exit(-1);
+		}
+		#endif
 
 		if (fd_file != NULL){
 			lock_acquire(&syscall_lock);
@@ -312,6 +334,7 @@ int read (int fd, void *buffer, unsigned size){
 
 			return count;
 		} else {
+			exit(-1);
 			return -1;
 		}
 	}
@@ -384,6 +407,75 @@ unsigned tell (int fd){
 	return (unsigned) file_tell(fd_to_file(fd)); //file.c
 }
 
+
+// P3-4-1 mmap, munmap 구현
+void *mmap (void *addr, size_t length, int writable, int fd, off_t offset){
+	// offset 부터 length bytes만큼 addr에 mapping 함수
+
+	// addr fail 조건: page-align안되있을때, NULL 일때
+	if ( is_kernel_vaddr(addr) ){ // addr가 kernel address면 fail
+		return NULL;
+	}
+	if ( addr = NULL || (pg_round_down(addr)!= addr)){
+		return NULL;
+	}
+
+	// length fail 조건: 0일때, (추가) 0보다 작을때, Kern_base 보다 클때(mmap-kernel)
+	if (length <= 0 || length >= KERN_BASE){
+		return NULL;
+	}
+
+	// fd 조건: 0,1 이면 안됨(stdin, stdout) - Stdin,stdout mapping 금지
+	if (fd <= 1){
+		return NULL;
+	}
+	// offset 조건
+	if (pg_round_down(offset)!=offset){
+		return NULL;
+	}
+
+	struct file *fd_file = fd_to_file(fd);
+	if (fd_file == NULL){ // fd로 file 못찾으면 fail
+		return NULL;
+	}
+	
+	// file 크기가 0, offset이 file 크기보다 크면 fail
+	if (file_length(fd_file) == 0 || file_length(fd_file) <= offset){
+		return NULL;
+	}
+
+	return do_mmap(addr, length, writable, fd_file, offset);
+
+}
+
+void munmap (void *addr){
+	// addr가 align 안되있을 경우
+	if (pg_round_down(addr) != addr){
+		return;
+	}
+
+	struct page *page = spt_find_page(&thread_current()->spt, addr);
+	// page를 찾을 수 없다면 -> addr로 된 page 없음 -> return
+	if ( page == NULL ){
+		return;
+	}
+
+	// page type VM_File 아니면 fail
+	if (!page->operations->type != VM_FILE){
+		return;
+	}
+
+	// page가 첫번째가 아니면 fail
+	if (!page->file.is_first_page){
+		return;
+	}
+
+	do_munmap(addr);
+}
+
+
+
+// helper 함수들
 // fd 비교 함수
 static bool fd_cmp(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED){
 	return (list_entry(a, struct fd_list_elem, elem) -> fd < list_entry(b, struct fd_list_elem, elem) -> fd);

@@ -53,6 +53,8 @@ struct page {
 	bool writable;
 	enum vm_type page_vm_type;
 
+	// P3-victim-0 victim_list_elem 변수 추가
+	struct list_elem victim_list_elem;
 
 	/* Per-type data are binded into the union.
 	 * Each function automatically detects the current union */
@@ -121,5 +123,6 @@ enum vm_type page_get_type (struct page *page);
 uint64_t page_hash_hash (const struct hash_elem *e, void *aux);
 bool page_hash_less (const struct hash_elem *x, const struct hash_elem *y, void *aux);
 
+void spt_destroy_func(struct hash_elem *e, void *aux);
 
 #endif  /* VM_VM_H */

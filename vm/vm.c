@@ -9,6 +9,9 @@
 #include "userprog/process.h"
 #include <string.h>
 
+// P3-victim
+struct list victim_list;
+
 /* Initializes the virtual memory subsystem by invoking each subsystem's
  * intialize codes. */
 void
@@ -21,6 +24,8 @@ vm_init (void) {
 	register_inspect_intr ();
 	/* DO NOT MODIFY UPPER LINES. */
 	/* TODO: Your code goes here. */
+	// P3-victim-1 victim_list 초기화
+	list_init(&victim_list);
 }
 
 /* Get the type of the page. This function is useful if you want to know the
@@ -146,6 +151,33 @@ vm_get_victim (void) {
 	struct frame *victim = NULL;
 	 /* TODO: The policy for eviction is up to you. */
 
+	 struct list_elem *victim_elem = list_front(&victim_list);
+
+
+	// victim_list 에서 제거할 frame 선택
+	 while (1){
+			struct page *victim_page = list_entry (victim_elem, struct page, victim_list_elem);
+			void *victim_addr = victim_page->va;
+
+			// 해당 페이지에 access 하지 않은 경우
+			if (pml4_is_accessed(&thread_current()->pml4, victim_addr) == false){
+				list_remove(victim_elem);
+				return victim_page->frame;
+			} else { // accesss 한경우
+				// 페이지의 accesssed bit 0으로 설정
+				pml4_set_accessed(&thread_current()->pml4, victim_addr, 0);
+				// victim_elem 다음으로 설정
+				victim_elem = list_next(victim_elem);
+
+				// victim_elem 마지막 element면 처음부터 다시
+				if(victim_elem == list_end(&victim_list)){
+					victim_elem = list_front(&victim_list);
+				}
+
+			}
+		
+	 }
+
 	return victim;
 }
 
@@ -177,7 +209,6 @@ vm_get_frame (void) {
 
 	// 메모리 가득차서 새로운 프레임 생성 못하면 evict
 	if (new == NULL){
-		PANIC("TODO");
 		return vm_evict_frame();
 	}
 
@@ -195,6 +226,22 @@ vm_get_frame (void) {
 /* Growing the stack. */
 static void
 vm_stack_growth (void *addr UNUSED) {
+	// P3-3-2 vm_stack_growth 함수 구현
+	// 조건에 맞을시 stack growth 실행하는 것
+
+	void *round_addr = pg_round_down(addr);
+
+	struct page *page;
+	while((page = spt_find_page(&thread_current()->spt, round_addr)) == NULL){
+		if((vm_alloc_page(VM_ANON|VM_MARKER_0, round_addr, true)) && vm_claim_page(round_addr)){
+			memset(round_addr, 0, PGSIZE);
+			round_addr += PGSIZE;
+		} else { // alloc, claim 실패시
+			palloc_free_page(round_addr);
+			PANIC("alloc, claim fail in growth stack");
+		}
+	}
+
 }
 
 /* Handle the fault on write_protected page */
@@ -209,7 +256,7 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED,
 	
 	/* TODO: Validate the fault */
 	/* TODO: Your code goes here */
-	// P3-2-5 page_fault 관리
+	// P3-2-5 page_fault 관리, 
 	// exception.c의 page_fault 함수서 호출됨
 	// 해당 fault가 vaild 한 fault인지 확인
 	struct supplemental_page_table *spt UNUSED = &thread_current ()->spt;
@@ -232,6 +279,19 @@ vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED,
 	// spt에서 addr 찾기
 	struct page *page = spt_find_page(spt, addr);
 	if (page == NULL){ // spt에 없는 page면
+		// P3-3-1 stack growth 조건 추가
+		// stack 다 찰경우 page 더 만들어서 추가하게 구현
+		// stack pointer 8bytes 아래에서 page fault 발생가능
+		// stack은 1MB까지 커질수 있게 구현
+		if (user && write){
+			if ( (USER_STACK - (1<<20)) < addr && addr < USER_STACK){
+				if (((int)stack_pointer)-32 <= (int) addr){ //addr가 stack_pointer 8byte 아래 가르키면
+					vm_stack_growth(addr); // stack growth
+					return true;
+				}
+			}
+		}
+
 		return false;
 	} else { // spt에 있는 page 경우
 		// writable 금지 인데 write하려하면 false
@@ -287,8 +347,10 @@ vm_do_claim_page (struct page *page) {
 		return false;
 	}
 	
-	bool succ = swap_in (page, frame->kva);
+	// P3-victim-2 claim 할때 victim list에 추가
+	list_push_back(&victim_list, &page->victim_list_elem);
 
+	bool succ = swap_in (page, frame->kva);
 	return succ;
 }
 
@@ -339,6 +401,20 @@ supplemental_page_table_copy (struct supplemental_page_table *dst UNUSED,
 				}
 				struct page *child_p = spt_find_page(dst, p->va);
 				memcpy(child_p->va, p->frame->kva, PGSIZE);
+				break;
+			case VM_FILE: // P3-4-3 추가 수정
+				// aux 복제
+				aux = (struct page_load_info *) malloc(sizeof(struct page_load_info));
+				aux->file = p->file.file;
+				aux->is_first_page = p->file.is_first_page;
+				aux->num_left_page = p->file.num_left_page;
+				aux->ofs = p->file.ofs;
+				aux->read_bytes = p->file.read_bytes;
+				aux->zero_bytes = p->file.zero_bytes;
+
+				if(!vm_alloc_page_with_initializer(VM_FILE, p->va, p->writable, NULL, aux)){
+					return false;
+				}
 				break;
 			
 			default:
