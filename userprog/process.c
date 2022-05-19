@@ -338,6 +338,7 @@ process_wait (tid_t child_tid UNUSED) {
 		if (child->tid == child_tid){
 			// 부모는 child가 status 나올때까지 중지
 			// sema_up(&thread_current()->_do_fork_sema);
+			sema_up(&thread_current()->_do_fork_sema);
 			sema_down(&child->wait_status_sema);
 
 			int child_status = child->exit_status;

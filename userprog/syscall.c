@@ -191,7 +191,7 @@ pid_t fork (const char *thread_name){
 		if (child->exit_status == TID_ERROR)
 			return TID_ERROR;
 		
-		sema_up(&thread_current()->_do_fork_sema); // 추추가
+		//sema_up(&thread_current()->_do_fork_sema); // process.c의 process_wait으로 이동
 	}	
 	return child_pid;
 }
@@ -277,7 +277,6 @@ int open (const char *file){
 		}
 
 		list_insert_ordered(thread_current()->fd_list, &fd_elem->elem, fd_cmp, NULL);
-
 		return fd_elem -> fd;
 
 	} else { //파일 너무 많이 열면 에러
