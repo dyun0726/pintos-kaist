@@ -194,6 +194,7 @@ void
 do_munmap (void *addr) {
 	struct page *first_page = spt_find_page(&thread_current()->spt, addr);
 	int munmap_page_num = first_page->file.num_left_page;
+	// printf("left page: %d\n", first_page->file.num_left_page);
 
 	struct file *file = first_page->file.file;
 

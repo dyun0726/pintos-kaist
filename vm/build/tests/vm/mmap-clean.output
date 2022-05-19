@@ -26,7 +26,7 @@ Executing 'mmap-clean':
 mmap-clean: exit(0)
 Execution of 'mmap-clean' complete.
 Timer: 87 ticks
-Thread: 34 idle ticks, 50 kernel ticks, 3 user ticks
+Thread: 34 idle ticks, 49 kernel ticks, 4 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 120 reads, 263 writes
 hd1:0: 112 reads, 0 writes

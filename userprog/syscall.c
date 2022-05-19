@@ -306,6 +306,7 @@ int read (int fd, void *buffer, unsigned size){
 	// printf("read first\n");
 	check_address(buffer);
 	// printf("check succ\n");
+	// printf("size : %d\n",size);
 	int count = 0;
 
 	if (fd == 0) { // 0(STDIN)일때 input_getc
@@ -331,7 +332,7 @@ int read (int fd, void *buffer, unsigned size){
 			lock_acquire(&syscall_lock);
 			count = file_read(fd_file, buffer, size);
 			lock_release(&syscall_lock);
-
+			// printf("count: %d\n", count);
 			return count;
 		} else {
 			exit(-1);
@@ -452,26 +453,31 @@ void *mmap (void *addr, size_t length, int writable, int fd, off_t offset){
 
 void munmap (void *addr){
 	// addr가 align 안되있을 경우
+	// printf("munmap first\n");
 	if (pg_round_down(addr) != addr){
+		// printf("pg_round_down\n");
 		return;
 	}
 
 	struct page *page = spt_find_page(&thread_current()->spt, addr);
 	// page를 찾을 수 없다면 -> addr로 된 page 없음 -> return
 	if ( page == NULL ){
+		// printf("pg_null\n");
 		return;
 	}
 
 	// page type VM_File 아니면 fail
-	if (!page->operations->type != VM_FILE){
+	// printf("vm_type: %d", page->operations->type);
+	if (page->operations->type != VM_FILE){
+		// printf("not vm file\n");
 		return;
 	}
 
 	// page가 첫번째가 아니면 fail
 	if (!page->file.is_first_page){
+		// printf("not first page\n");
 		return;
 	}
-
 	do_munmap(addr);
 }
 
