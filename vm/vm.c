@@ -399,7 +399,7 @@ supplemental_page_table_copy (struct supplemental_page_table *dst UNUSED,
 				if(!vm_claim_page(p->va)){
 					return false;
 				}
-				struct page *child_p = spt_find_page(dst, p->va);
+				struct page *child_p = spt_find_page(&thread_current()->spt, p->va);
 				memcpy(child_p->va, p->frame->kva, PGSIZE);
 				break;
 			case VM_FILE: // P3-4-3 추가 수정
