@@ -6,6 +6,7 @@
 #include "filesys/filesys.h"
 #include "filesys/free-map.h"
 #include "threads/malloc.h"
+#include "filesys/fat.h" // P4-2-0 추가
 
 /* Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
@@ -40,6 +41,29 @@ struct inode {
  * INODE.
  * Returns -1 if INODE does not contain data for a byte at offset
  * POS. */
+
+// P4-2-3 byte_to_sector efilesys 추가
+// byte to sector 함수는 file을 위한 sector가 연결되있는 것으로 가정함
+// FAT은 그렇지 않으므로 새로 만들어줘야함
+#ifdef EFILESYS
+byte_to_sector (const struct inode *inode, off_t pos) {
+	ASSERT (inode != NULL);
+	if (pos < inode->data.length){
+		// pos가 가리키는 cluster 계산
+		off_t clst_num = pos / (DISK_SECTOR_SIZE * SECTORS_PER_CLUSTER);
+		cluster_t clst_while = sector_to_cluster(inode->data.start);
+		while (clst_num > 0){
+			clst_while = fat_get(clst_while);
+			clst_num--;
+		}
+		disk_sector_t pos_sector = cluster_to_sector(clst_while);
+		return pos_sector;
+	} else {
+		return -1;
+	}
+}
+
+#else
 static disk_sector_t
 byte_to_sector (const struct inode *inode, off_t pos) {
 	ASSERT (inode != NULL);
@@ -48,6 +72,7 @@ byte_to_sector (const struct inode *inode, off_t pos) {
 	else
 		return -1;
 }
+#endif
 
 /* List of open inodes, so that opening a single inode twice
  * returns the same `struct inode'. */
@@ -64,8 +89,11 @@ inode_init (void) {
  * disk.
  * Returns true if successful.
  * Returns false if memory or disk allocation fails. */
+
+// P4-2-4 inode_create 함수 FAT으로 수정
 bool
 inode_create (disk_sector_t sector, off_t length) {
+	// printf("inode_create\n");
 	struct inode_disk *disk_inode = NULL;
 	bool success = false;
 
@@ -78,8 +106,45 @@ inode_create (disk_sector_t sector, off_t length) {
 	disk_inode = calloc (1, sizeof *disk_inode);
 	if (disk_inode != NULL) {
 		size_t sectors = bytes_to_sectors (length);
+		// printf("sectors: %d\n", sectors);
 		disk_inode->length = length;
 		disk_inode->magic = INODE_MAGIC;
+		// 후에 추가 요망
+
+		// P4-2-4 FAT으로 수정
+		#ifdef EFILESYS
+		//static char zeros[DISK_SECTOR_SIZE];
+		
+		// 새로운 chain 생성
+		cluster_t first_clst = fat_create_chain(0);
+		if (first_clst == 0){ // 새로운 chain 만드는것 실패하면
+			free(disk_inode);
+			return success; // false
+		}
+
+		disk_inode->start = cluster_to_sector(first_clst);
+
+		disk_write(filesys_disk, sector, disk_inode);
+
+		cluster_t len_clst = sectors / SECTORS_PER_CLUSTER; // 할당할 cluster 개수
+
+		cluster_t tmp_first_clst = first_clst; //실패할때 대비해서 임시저장
+
+		while (len_clst > 1){
+			first_clst = fat_create_chain(first_clst);
+			if (first_clst == 0){ // 도중에 chain 만들기 실패 -> free & fail
+				fat_remove_chain(tmp_first_clst, 0);
+				free(disk_inode);
+				return success;
+			}
+			len_clst--;
+		}
+		success = true;
+		free(disk_inode);
+		return success;
+
+		#else
+
 		if (free_map_allocate (sectors, &disk_inode->start)) {
 			disk_write (filesys_disk, sector, disk_inode);
 			if (sectors > 0) {
@@ -92,8 +157,9 @@ inode_create (disk_sector_t sector, off_t length) {
 			success = true; 
 		} 
 		free (disk_inode);
+		return success;
+		#endif
 	}
-	return success;
 }
 
 /* Reads an inode from SECTOR
@@ -159,9 +225,16 @@ inode_close (struct inode *inode) {
 
 		/* Deallocate blocks if removed. */
 		if (inode->removed) {
+
+			#ifdef EFILESYS // P4-2-5 inode close FAT 수정
+			fat_remove_chain(sector_to_cluster(inode->sector), 0);
+			fat_remove_chain(sector_to_cluster(inode->data.start), 0);
+
+			#else
 			free_map_release (inode->sector, 1);
 			free_map_release (inode->data.start,
 					bytes_to_sectors (inode->data.length)); 
+			#endif
 		}
 
 		free (inode); 

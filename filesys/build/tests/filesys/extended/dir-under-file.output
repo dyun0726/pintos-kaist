@@ -1,0 +1,31 @@
+Kernel command line: -q -f put dir-under-file put tar run dir-under-file
+0 ~ 9fc00 1
+100000 ~ 13e0000 1
+Pintos booting with: 
+	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
+	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
+Calibrating timer...  104,755,200 loops/s.
+hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:1: detected 4,032 sector (1 MB) disk, model "QEMU HARDDISK", serial "QM00002"
+hd1:0: detected 223 sector (111 kB) disk, model "QEMU HARDDISK", serial "QM00003"
+hd1:1: detected 8,064 sector (3 MB) disk, model "QEMU HARDDISK", serial "QM00004"
+Formatting file system...done.
+Boot complete.
+Putting 'dir-under-file' into the file system...
+Putting 'tar' into the file system...
+Executing 'dir-under-file':
+(dir-under-file) begin
+(dir-under-file) create "abc"
+(dir-under-file) mkdir "abc" (must return false)
+system call!
+Execution of 'dir-under-file' complete.
+Timer: 86 ticks
+Thread: 38 idle ticks, 46 kernel ticks, 2 user ticks
+hd0:0: 0 reads, 0 writes
+hd0:1: 149 reads, 521 writes
+hd1:0: 223 reads, 0 writes
+hd1:1: 0 reads, 0 writes
+Console: 1081 characters output
+Keyboard: 0 keys pressed
+Exception: 0 page faults
+Powering off...

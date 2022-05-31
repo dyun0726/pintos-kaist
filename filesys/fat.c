@@ -153,6 +153,18 @@ fat_boot_create (void) {
 void
 fat_fs_init (void) {
 	/* TODO: Your code goes here. */
+
+	// P4-1-1 fat_fs_init 구현, FAT file system init
+	// fat_length, data_start, lock init 해야함
+
+	// fat_length: how many clusters in the filesystem
+	fat_fs->fat_length = (fat_fs->bs.total_sectors - fat_fs->bs.fat_sectors)/ SECTORS_PER_CLUSTER;
+
+	// data_start: which sector we can start to store files
+	fat_fs->data_start = fat_fs->bs.fat_start + fat_fs->bs.fat_sectors + 1;
+
+	// lock init
+	lock_init(&fat_fs->write_lock);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -165,6 +177,24 @@ fat_fs_init (void) {
 cluster_t
 fat_create_chain (cluster_t clst) {
 	/* TODO: Your code goes here. */
+	// P4-1-2 fat_create_chain 함수 구현
+
+	cluster_t ept_clst = first_empty_cluster();
+	if (ept_clst == 0){ // empty cluster 없으면 return 0;
+		return 0;
+	}
+
+	if (clst != 0){ // clst에 ept_clst 넣고, ept_clst엔 EOChain
+		fat_put(ept_clst, EOChain);
+		fat_put(clst, ept_clst);
+	} else { // clst 0이면 new chain start
+		fat_put(ept_clst, EOChain);
+	}
+
+	// 추가한 cluster, disk에 할당
+	static char ept_disk[DISK_SECTOR_SIZE];
+	disk_write(filesys_disk, cluster_to_sector(ept_clst), ept_disk);
+	return ept_clst;
 }
 
 /* Remove the chain of clusters starting from CLST.
@@ -172,22 +202,90 @@ fat_create_chain (cluster_t clst) {
 void
 fat_remove_chain (cluster_t clst, cluster_t pclst) {
 	/* TODO: Your code goes here. */
+	
+	// P4-1-3 fat_remove_chain 함수 구현
+	// pclst 가 0 이거나(clst가 처음인 fat) pclst 다음이 clst 여야함
+	ASSERT(pclst == 0 || fat_get(pclst) == clst);
+
+	if (pclst != 0){ // clst가 처음이 아니면
+		fat_put(pclst, EOChain); // pclst 를 마지막으로 만들어야함
+	}
+
+	cluster_t i = clst;
+	while (i != EOChain){
+		cluster_t tmp = fat_get(i);
+		fat_put(i, 0);
+		i = tmp;
+	}
 }
 
 /* Update a value in the FAT table. */
 void
 fat_put (cluster_t clst, cluster_t val) {
 	/* TODO: Your code goes here. */
+	// P4-1-4 fat_put 구현
+
+	// clst 0이하이면 return (0은 boot sector)
+	if (clst <= 0){
+		return;
+	}
+
+	// fat 크기보다 clst 크면 return
+	if (clst >= fat_fs->fat_length){
+		return;
+	}
+
+	lock_acquire(&fat_fs->write_lock);
+	fat_fs->fat[clst] = val;
+	lock_release(&fat_fs->write_lock);
+
 }
 
 /* Fetch a value in the FAT table. */
 cluster_t
 fat_get (cluster_t clst) {
 	/* TODO: Your code goes here. */
+	// P4-1-5 fat_get 함수 구현
+
+	// clst 0이하이면 (0은 boot sector)
+	if (clst <= 0){
+		PANIC("clst <= 0");
+	}
+
+	// fat 크기보다 clst 크면
+	if (clst >= fat_fs->fat_length){
+		PANIC ("clst too large");
+	}
+
+	return fat_fs->fat[clst];
 }
 
 /* Covert a cluster # to a sector number. */
+// FAT 1부터 시작, 1은 root directory
 disk_sector_t
 cluster_to_sector (cluster_t clst) {
 	/* TODO: Your code goes here. */
+	// P4-1-6 cluster_to_sector 함수 구현
+	if (clst == 0){
+		return 0;
+	}
+	return fat_fs->data_start + (clst-2) * SECTORS_PER_CLUSTER;
+}
+
+// P4-1-2 보조함수, 첫번째로 비어있는 cluster return, 비어있는 cluster 없으면 0
+static cluster_t
+first_empty_cluster (void){
+	for (cluster_t i = 2; i < fat_fs->fat_length; i++){
+		if (fat_get(i) == 0){
+			return i;
+		}
+	}
+	// 비어있는 cluster 없음
+	return 0;
+}
+
+// P4-2 보조함수, sector를 cluster로
+cluster_t
+sector_to_cluster (disk_sector_t sector) {
+   return ((sector - fat_fs->data_start) / SECTORS_PER_CLUSTER) + 2;
 }
