@@ -18,10 +18,10 @@ Executing 'dir-empty-name':
 (dir-empty-name) mkdir "" (must return false)
 system call!
 Execution of 'dir-empty-name' complete.
-Timer: 88 ticks
-Thread: 30 idle ticks, 56 kernel ticks, 2 user ticks
+Timer: 90 ticks
+Thread: 32 idle ticks, 56 kernel ticks, 2 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 128 reads, 515 writes
+hd0:1: 128 reads, 523 writes
 hd1:0: 222 reads, 0 writes
 hd1:1: 0 reads, 0 writes
 Console: 1048 characters output

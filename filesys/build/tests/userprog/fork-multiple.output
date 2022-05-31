@@ -29,10 +29,10 @@ child: exit(7)
 (fork-multiple) end
 fork-multiple: exit(0)
 Execution of 'fork-multiple' complete.
-Timer: 98 ticks
-Thread: 40 idle ticks, 49 kernel ticks, 9 user ticks
+Timer: 93 ticks
+Thread: 35 idle ticks, 56 kernel ticks, 2 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 234 reads, 528 writes
+hd0:1: 234 reads, 533 writes
 hd1:0: 104 reads, 0 writes
 hd1:1: 0 reads, 0 writes
 Console: 1332 characters output

@@ -18,10 +18,10 @@ Executing 'dir-mkdir':
 (dir-mkdir) mkdir "a"
 system call!
 Execution of 'dir-mkdir' complete.
-Timer: 87 ticks
-Thread: 37 idle ticks, 49 kernel ticks, 1 user ticks
+Timer: 89 ticks
+Thread: 36 idle ticks, 52 kernel ticks, 1 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 128 reads, 517 writes
+hd0:1: 128 reads, 525 writes
 hd1:0: 223 reads, 0 writes
 hd1:1: 0 reads, 0 writes
 Console: 994 characters output

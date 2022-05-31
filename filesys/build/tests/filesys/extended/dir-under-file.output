@@ -20,9 +20,9 @@ Executing 'dir-under-file':
 system call!
 Execution of 'dir-under-file' complete.
 Timer: 86 ticks
-Thread: 38 idle ticks, 46 kernel ticks, 2 user ticks
+Thread: 39 idle ticks, 47 kernel ticks, 0 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 149 reads, 521 writes
+hd0:1: 149 reads, 530 writes
 hd1:0: 223 reads, 0 writes
 hd1:1: 0 reads, 0 writes
 Console: 1081 characters output

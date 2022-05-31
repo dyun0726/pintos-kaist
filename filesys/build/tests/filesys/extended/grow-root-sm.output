@@ -30,16 +30,21 @@ Executing 'grow-root-sm':
 (grow-root-sm) creating and checking "file12"
 (grow-root-sm) creating and checking "file13"
 (grow-root-sm) creating and checking "file14"
-(grow-root-sm) create "file14": FAILED
-grow-root-sm: exit(1)
+(grow-root-sm) creating and checking "file15"
+(grow-root-sm) creating and checking "file16"
+(grow-root-sm) creating and checking "file17"
+(grow-root-sm) creating and checking "file18"
+(grow-root-sm) creating and checking "file19"
+(grow-root-sm) end
+grow-root-sm: exit(0)
 Execution of 'grow-root-sm' complete.
-Timer: 106 ticks
-Thread: 30 idle ticks, 51 kernel ticks, 25 user ticks
+Timer: 137 ticks
+Thread: 56 idle ticks, 49 kernel ticks, 32 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 882 reads, 592 writes
+hd0:1: 1347 reads, 727 writes
 hd1:0: 224 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1720 characters output
+Console: 1931 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

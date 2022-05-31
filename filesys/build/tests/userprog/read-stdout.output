@@ -16,10 +16,10 @@ Executing 'read-stdout':
 (read-stdout) begin
 read-stdout: exit(-1)
 Execution of 'read-stdout' complete.
-Timer: 86 ticks
-Thread: 35 idle ticks, 51 kernel ticks, 0 user ticks
+Timer: 85 ticks
+Thread: 37 idle ticks, 47 kernel ticks, 1 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 227 reads, 524 writes
+hd0:1: 227 reads, 529 writes
 hd1:0: 102 reads, 0 writes
 hd1:1: 0 reads, 0 writes
 Console: 947 characters output

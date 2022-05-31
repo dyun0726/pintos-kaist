@@ -15,9 +15,9 @@ Putting 'halt' into the file system...
 Executing 'halt':
 (halt) begin
 Timer: 90 ticks
-Thread: 35 idle ticks, 50 kernel ticks, 5 user ticks
+Thread: 39 idle ticks, 50 kernel ticks, 1 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 227 reads, 524 writes
+hd0:1: 227 reads, 528 writes
 hd1:0: 102 reads, 0 writes
 hd1:1: 0 reads, 0 writes
 Console: 853 characters output

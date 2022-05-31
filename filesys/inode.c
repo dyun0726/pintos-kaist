@@ -218,6 +218,9 @@ inode_close (struct inode *inode) {
 	if (inode == NULL)
 		return;
 
+	// P4-3-2 수정한 내용 disk에 작성
+	disk_write (filesys_disk, inode->sector, &inode->data);
+
 	/* Release resources if this was the last opener. */
 	if (--inode->open_cnt == 0) {
 		/* Remove from inode list and release lock. */
@@ -303,6 +306,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset) {
  * less than SIZE if end of file is reached or an error occurs.
  * (Normally a write at end of file would extend the inode, but
  * growth is not yet implemented.) */
+// P4-3-1 file growth 구현
 off_t
 inode_write_at (struct inode *inode, const void *buffer_, off_t size,
 		off_t offset) {
@@ -310,8 +314,45 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
 	off_t bytes_written = 0;
 	uint8_t *bounce = NULL;
 
-	if (inode->deny_write_cnt)
+	if (inode->deny_write_cnt){
 		return 0;
+	}
+	
+	// P4-3-1 file growth 구현 if문
+	if (inode->data.length < size + offset){
+		// inode의 마지막 clst 구하는 과정
+		cluster_t last_clst = sector_to_cluster(inode->data.start);
+		while(fat_get(last_clst) != EOChain){
+			last_clst = fat_get(last_clst);
+		}
+
+		// 오류날 경우 대비해서 임시 저장
+		cluster_t tmp_last_clst = last_clst;
+
+		// 추가로 필요한 clst 개수 구하기
+		cluster_t num_new_clst = DIV_ROUND_UP(size + offset, DISK_SECTOR_SIZE * SECTORS_PER_CLUSTER);
+		cluster_t num_curr_clst = DIV_ROUND_UP(inode->data.length, DISK_SECTOR_SIZE * SECTORS_PER_CLUSTER);
+		cluster_t num_need_clst = num_new_clst - num_curr_clst;
+
+		if (inode->data.length == 0){ // data가 없을 경우, sector 하나 할당되어있지만, 아무것도 안쓰여있음
+			num_need_clst--; //따라서 need_clst 하나 줄이기
+		}
+
+		// 필요한 개수만큼 chain 추가
+		while (num_need_clst > 0){
+			last_clst = fat_create_chain(last_clst);
+			if (last_clst == 0){ // create fail이면 만들어진 chain 없애고 return 0
+				if (fat_get(tmp_last_clst) != EOChain){ // 만들어진 chain 있으면
+					fat_remove_chain(fat_get(tmp_last_clst), tmp_last_clst); // chain 제거
+				}
+				return 0;
+			}
+			num_need_clst--;
+		}
+		// length 수정
+		inode->data.length = size + offset;
+
+	}
 
 	while (size > 0) {
 		/* Sector to write, starting byte offset within sector. */

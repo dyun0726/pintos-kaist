@@ -16,10 +16,10 @@ Executing 'read-bad-fd':
 (read-bad-fd) begin
 read-bad-fd: exit(-1)
 Execution of 'read-bad-fd' complete.
-Timer: 90 ticks
-Thread: 33 idle ticks, 54 kernel ticks, 3 user ticks
+Timer: 84 ticks
+Thread: 34 idle ticks, 49 kernel ticks, 1 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 227 reads, 526 writes
+hd0:1: 227 reads, 531 writes
 hd1:0: 103 reads, 0 writes
 hd1:1: 0 reads, 0 writes
 Console: 947 characters output
