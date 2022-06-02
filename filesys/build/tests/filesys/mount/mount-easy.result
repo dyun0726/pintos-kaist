@@ -18,7 +18,7 @@ Acceptable output:
 Differences in `diff -u' format:
   (mount-easy) begin
   (mount-easy) mkdir "/a"
-- (mount-easy) mount the second disk at "/a"
+  (mount-easy) mount the second disk at "/a"
 - Formatting file system...done.
 - (mount-easy) chdir "/a"
 - (mount-easy) mkdir "/a/b"

@@ -17,6 +17,8 @@
 #include <string.h> // memcpy()
 #include "userprog/process.h" // pid_t
 #include "vm/file.h" // do_mmap, do_munmap
+#include "filesys/directory.h" // P4-4-3 추가
+#include "filesys/inode.h" // P4-4-3 추가
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -126,6 +128,21 @@ syscall_handler (struct intr_frame *f UNUSED) {
 			break;
 
 //#endif
+		case SYS_CHDIR:
+			f->R.rax = chdir(f->R.rdi);
+			break;
+		case SYS_MKDIR:
+			f->R.rax = mkdir(f->R.rdi);
+			break;
+		case SYS_READDIR:
+			f->R.rax = readdir(f->R.rdi, f->R.rsi);
+			break;
+		case SYS_ISDIR:
+			f->R.rax = isdir(f->R.rdi);
+			break;
+		case SYS_INUMBER:
+			f->R.rax = inumber(f->R.rdi);
+			break;
 
 		default:
 			printf ("system call!\n");
@@ -354,6 +371,11 @@ int write(int fd, const void *buffer, unsigned size){
 		return -1;
 	} else {
 		struct file *fd_file = fd_to_file(fd); //fd로 file 변환
+		
+		// P4-4-3 fd_file dir 이면 return -1
+		if (file_is_dir(fd_file) == true) {
+			return -1;
+		}
 
 		if (fd_file == NULL){
 			return -1;
@@ -480,6 +502,42 @@ void munmap (void *addr){
 	do_munmap(addr);
 }
 
+// P4-4-3 chdir, mkdir, readdir,isdir, inumber 구현
+bool chdir (const char *dir){
+	check_address(dir);
+
+	if (strlen(dir) == 0){
+		return false;
+	}
+
+	return dir_change(dir);
+}
+
+bool mkdir (const char *dir){
+	check_address(dir);
+
+	return dir_make(dir);
+}
+
+bool readdir (int fd, char *name){
+	check_address(name);
+
+	struct file *file = fd_to_file(fd);
+	if (file_is_dir(file) == false){
+		return false;
+	}
+	return dir_readdir((struct dir *) file, name);
+}
+
+bool isdir (int fd){
+	struct file *file = fd_to_file(fd);
+	return file_is_dir(file);
+}
+
+int inumber (int fd){
+	struct file *file = fd_to_file(fd);
+	return inode_get_inumber(file_get_inode(file));
+}
 
 
 // helper 함수들

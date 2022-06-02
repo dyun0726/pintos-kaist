@@ -17,4 +17,5 @@ userprog/syscall.o: ../../userprog/syscall.c \
  ../../include/threads/pte.h ../../include/threads/vaddr.h \
  ../../include/threads/init.h ../../include/filesys/filesys.h \
  ../../include/devices/input.h ../../include/lib/string.h \
- ../../include/userprog/process.h
+ ../../include/userprog/process.h ../../include/filesys/directory.h \
+ ../../include/devices/disk.h ../../include/filesys/inode.h

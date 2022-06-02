@@ -6,6 +6,7 @@
 #include "filesys/inode.h"
 #include "threads/malloc.h"
 #include "filesys/fat.h"
+#include "threads/thread.h" // P4-4-3 추가
 
 /* A directory. */
 struct dir {
@@ -24,7 +25,8 @@ struct dir_entry {
  * given SECTOR.  Returns true if successful, false on failure. */
 bool
 dir_create (disk_sector_t sector, size_t entry_cnt) {
-	return inode_create (sector, entry_cnt * sizeof (struct dir_entry));
+	// P4-4-2 inode_create 수정 (is_file = false)
+	return inode_create (sector, entry_cnt * sizeof (struct dir_entry), false);
 }
 
 /* Opens and returns the directory for the given INODE, of which
@@ -33,6 +35,10 @@ struct dir *
 dir_open (struct inode *inode) {
 	struct dir *dir = calloc (1, sizeof *dir);
 	if (inode != NULL && dir != NULL) {
+		
+		// inode가 dir이어야함, P4-4-4 dir 함수 수정
+		ASSERT(inode_is_dir(inode));
+
 		dir->inode = inode;
 		dir->pos = 0;
 		return dir;
@@ -190,6 +196,36 @@ dir_remove (struct dir *dir, const char *name) {
 	if (inode == NULL)
 		goto done;
 
+	// P4-4-3 dir를 제거할 때 추가
+	if (inode_is_dir(inode)){
+		struct dir *rmv_dir = dir_open(inode);
+
+		struct dir_entry check;
+
+		// dir에 다른 폴더 남아 있으면 false
+		while (inode_read_at(rmv_dir->inode, &check, sizeof(check), rmv_dir->pos) == sizeof(check)){
+			rmv_dir->pos += sizeof(check);
+			if (check.in_use){
+				if (strcmp(check.name, ".") && strcmp(check.name, "..")){
+					return false;
+				}
+			}
+		}
+
+		// 현재 작업중인 dir 제거 하려하면 false
+		struct dir *work_dir = thread_current()->working_dir;
+		if (inode == dir_get_inode(work_dir)){
+			dir_close(rmv_dir);
+			return false;
+		}
+
+		// dir의 inode 여러번 열려 있으면
+		if (inode_open_cnt(inode) > 2) {
+			dir_close(rmv_dir);
+			return false;
+		}
+	}
+
 	/* Erase directory entry. */
 	e.in_use = false;
 	if (inode_write_at (dir->inode, &e, sizeof e, ofs) != sizeof e)
@@ -207,16 +243,120 @@ done:
 /* Reads the next directory entry in DIR and stores the name in
  * NAME.  Returns true if successful, false if the directory
  * contains no more entries. */
+// P4-4-3 dir_readdir 내부 수정 (., .. 넘기게)
 bool
 dir_readdir (struct dir *dir, char name[NAME_MAX + 1]) {
 	struct dir_entry e;
 
+	if (dir->pos == 0){
+		dir->pos += sizeof(e) * 2;
+	}
+
 	while (inode_read_at (dir->inode, &e, sizeof e, dir->pos) == sizeof e) {
 		dir->pos += sizeof e;
 		if (e.in_use) {
-			strlcpy (name, e.name, NAME_MAX + 1);
-			return true;
+			
+			// ., ..은 넘기게
+			if (strcmp(e.name, ".") && strcmp(e.name, "..")){
+				strlcpy (name, e.name, NAME_MAX + 1);
+				return true;
+			}
+			
 		}
 	}
 	return false;
 }
+
+// P4-4-3 dir_change 구현(syscall chdir에서 사용)
+bool
+dir_change (const char* dir){
+
+	// root로 이동할때
+	if (strcmp(dir, "/") == 0){ 
+		dir_close(thread_current()->working_dir);
+		thread_current()->working_dir = dir_open_root();
+		return true;
+	}
+
+	// dir 얻는 과정
+	char *name_dir = (char *) malloc(NAME_MAX + 1);
+	if (name_dir == NULL){
+		return false;
+	}
+	struct dir *new_dir = get_dir(dir, name_dir);
+
+	// dir 얻었는데 NULL이면 clean하고 false
+	if(new_dir == NULL){
+		dir_close(new_dir);
+		free(name_dir);
+		return false;
+	}
+
+	// new_dir에 name_dir 있는지 확인
+	struct inode *inode;
+	dir_lookup(new_dir, name_dir, &inode);
+	if (inode == NULL || !inode_is_dir(inode)){ // 없거나 파일이면 false
+		inode_close(inode);
+		dir_close(new_dir);
+		free(name_dir);
+		return false;
+	}
+
+	dir_close(thread_current()->working_dir);
+	thread_current()->working_dir = dir_open(inode);
+	dir_close(new_dir);
+	free(name_dir);
+	return true;
+}
+
+// P4-4-3 dir_make 구현
+bool
+dir_make(const char* dir){
+	// 작업할 dir, 만들 dir name 얻는 과정
+	char *name_make_dir = (char *) malloc(NAME_MAX + 1);
+	if (name_make_dir == NULL){
+		return false;
+	}
+	struct dir *work_dir = get_dir(dir, name_make_dir);
+
+	// dir 얻었는데 NULL이면 clean하고 false
+	if(work_dir == NULL){
+		free(name_make_dir);
+		dir_close(work_dir);
+		return false;
+	}
+
+	// 이미 dir가 존재 하는 경우
+	struct inode *inode;
+	dir_lookup(work_dir, name_make_dir, &inode);
+	if (inode != NULL){
+		inode_close(inode);
+		free(name_make_dir);
+		dir_close(work_dir);
+		return false;
+	}
+	
+	// dir 생성
+	disk_sector_t inode_sector = 0;
+	bool succ = (work_dir != NULL
+			&& (inode_sector = cluster_to_sector(fat_create_chain(0)))
+			&& dir_create (inode_sector, 0)
+			&& dir_add (work_dir, name_make_dir, inode_sector));
+
+	if (!succ && inode_sector != 0){
+		fat_remove_chain(sector_to_cluster(inode_sector), 0);
+	}
+
+	// dir에 ., .. 추가
+	struct dir *make_dir = dir_open(inode_open(inode_sector));
+	dir_add(make_dir, ".", inode_sector);
+	dir_add(make_dir, "..", inode_get_inumber(dir_get_inode(work_dir)));
+
+	// 마무리
+	dir_close(make_dir);
+	free(name_make_dir);
+	dir_close(work_dir);
+	return succ;
+
+}
+

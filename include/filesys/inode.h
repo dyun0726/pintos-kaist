@@ -8,7 +8,7 @@
 struct bitmap;
 
 void inode_init (void);
-bool inode_create (disk_sector_t, off_t);
+bool inode_create (disk_sector_t, off_t, bool); // P4-4-2 수정
 struct inode *inode_open (disk_sector_t);
 struct inode *inode_reopen (struct inode *);
 disk_sector_t inode_get_inumber (const struct inode *);
@@ -19,5 +19,10 @@ off_t inode_write_at (struct inode *, const void *, off_t size, off_t offset);
 void inode_deny_write (struct inode *);
 void inode_allow_write (struct inode *);
 off_t inode_length (const struct inode *);
+
+// P4-4-2 추가 보조 함수
+bool inode_is_dir (const struct inode *inode);
+// P4-4-3 추가 보조 함수
+int inode_open_cnt (const struct inode *inode);
 
 #endif /* filesys/inode.h */

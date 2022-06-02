@@ -17,7 +17,9 @@ struct inode_disk {
 	disk_sector_t start;                /* First data sector. */
 	off_t length;                       /* File size in bytes. */
 	unsigned magic;                     /* Magic number. */
-	uint32_t unused[125];               /* Not used. */
+	// P4-4-2 추가 file인지 dir인지 구분
+	bool is_file;
+	uint32_t unused[124];               /* Not used. */
 };
 
 /* Returns the number of sectors to allocate for an inode SIZE
@@ -91,9 +93,9 @@ inode_init (void) {
  * Returns false if memory or disk allocation fails. */
 
 // P4-2-4 inode_create 함수 FAT으로 수정
+// P4-4-2 is_file 추가
 bool
-inode_create (disk_sector_t sector, off_t length) {
-	// printf("inode_create\n");
+inode_create (disk_sector_t sector, off_t length, bool is_file) {
 	struct inode_disk *disk_inode = NULL;
 	bool success = false;
 
@@ -109,6 +111,8 @@ inode_create (disk_sector_t sector, off_t length) {
 		// printf("sectors: %d\n", sectors);
 		disk_inode->length = length;
 		disk_inode->magic = INODE_MAGIC;
+		// P4-4-2 is_file 추가
+		disk_inode->is_file = is_file;
 		// 후에 추가 요망
 
 		// P4-2-4 FAT으로 수정
@@ -424,4 +428,15 @@ inode_allow_write (struct inode *inode) {
 off_t
 inode_length (const struct inode *inode) {
 	return inode->data.length;
+}
+
+// P4-4-2 보조 함수 추가
+bool
+inode_is_dir (const struct inode *inode){
+	return !inode->data.is_file;
+}
+// P4-4-3 보조 함수 추가
+int
+inode_open_cnt (const struct inode *inode){
+	return inode->open_cnt;
 }

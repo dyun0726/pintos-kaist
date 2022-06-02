@@ -159,3 +159,8 @@ file_tell (struct file *file) {
 	ASSERT (file != NULL);
 	return file->pos;
 }
+
+// P4-4-3 system call write서 file인지 dir인지 구분
+bool file_is_dir (struct file *file){
+	return inode_is_dir(file->inode);
+}

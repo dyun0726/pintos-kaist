@@ -382,6 +382,11 @@ process_exit (void) {
 		}
 	}
 
+// P4-4-2 추가, 프로세스 종료시 working dir 닫기
+#ifdef EFILESYS
+	dir_close(curr->working_dir);
+#endif
+
 	process_cleanup();
 
 	// 3.자식의 status 확정됬으니 wait_status semaphore up
