@@ -160,6 +160,11 @@ filesys_open (const char *name) {
 		return result;
 	}
 
+	// P4-5-2 추가: 열 파일이 soft_link 이면
+	if (inode_is_soft_link(inode)){
+		return filesys_open(inode_soft_link_path(inode));
+	}
+
 	// 해당파일 open
 	result = file_open(inode);
 
@@ -337,6 +342,31 @@ struct dir *path_parsing(char *path_name, char *file_name){
 		dir_close(dir);
 
 		// soft link 후에 추가
+		// P4-5-2 찾은 inode가 soft link 일 경우 추가
+		if (inode_is_soft_link(return_inode)){
+			char *name_file = (char *) malloc(NAME_MAX+1);
+			char *soft_link_path = inode_soft_link_path(return_inode);
+
+			dir = get_dir(soft_link_path, name_file);
+
+			// dir 얻기 오류
+			if (dir == NULL){
+				free(name_file);
+				PANIC("PATH PARSING: soft_link error");
+			}
+
+			inode_close(return_inode);
+
+			// 얻은 dir에서 파일 찾기
+			dir_lookup(dir, name_file, &return_inode);
+
+			// 없으면 return false
+			if (return_inode == NULL){
+				dir_close(dir);
+				inode_close(return_inode);
+				return NULL;
+			}
+		}
 
 		// return inode가 dir가 아니면
 		if(inode_is_dir(return_inode) == false){
@@ -376,4 +406,48 @@ done:
 clean:
 	return dir;
 
+}
+
+// P4-5-1 systemcall symlink 구현
+int filesys_make_symlink(const char* target, const char* linkpath){
+	// target, linkpath 이상할때
+	if (target == NULL || linkpath == NULL || strlen(target) == 0 || strlen(linkpath)== 0){
+		return -1;
+	}
+
+	// linkpath parsing
+	char *name_file = (char *) malloc(NAME_MAX+1);
+	struct dir *work_dir = get_dir(linkpath, name_file);
+
+	// work_dir 얻기 실패
+	if (work_dir == NULL){
+		free(name_file);
+		dir_close(work_dir);
+		return -1;
+	}
+
+	disk_sector_t inode_sector;
+	bool succ = ((inode_sector = cluster_to_sector(fat_create_chain(0)))
+					&& inode_create(inode_sector, 0, true)
+					&& dir_add(work_dir, name_file, inode_sector));
+	
+	if(!succ && inode_sector != 0){
+		fat_remove_chain(sector_to_cluster(inode_sector), 0);
+		free(name_file);
+		dir_close(work_dir);
+		return -1;
+	}
+
+
+	// set soft link
+	if (!inode_set_soft_link(inode_sector, target)){ // set softlink 실패
+		free(name_file);
+		dir_close(work_dir);
+		return -1;
+	} else { // set softlink 성공
+		free(name_file);
+		dir_close(work_dir);
+		return 0;
+	}
+	
 }

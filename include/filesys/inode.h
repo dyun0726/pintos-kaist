@@ -24,5 +24,10 @@ off_t inode_length (const struct inode *);
 bool inode_is_dir (const struct inode *inode);
 // P4-4-3 추가 보조 함수
 int inode_open_cnt (const struct inode *inode);
+// P4-5-2 추가 보조 함수
+bool inode_set_soft_link (disk_sector_t inode_sector, const char *target);
+bool inode_is_soft_link (const struct inode *inode);
+char *inode_soft_link_path (const struct inode* inode);
+
 
 #endif /* filesys/inode.h */

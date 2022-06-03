@@ -19,7 +19,10 @@ struct inode_disk {
 	unsigned magic;                     /* Magic number. */
 	// P4-4-2 추가 file인지 dir인지 구분
 	bool is_file;
-	uint32_t unused[124];               /* Not used. */
+	// P4-5-2 soft_link 인지 아닌지 변수 추가
+	bool is_soft_link;
+	char soft_link_path[496]; // soft일때 path 저장
+	// uint32_t unused[124];               /* Not used. */
 };
 
 /* Returns the number of sectors to allocate for an inode SIZE
@@ -113,7 +116,8 @@ inode_create (disk_sector_t sector, off_t length, bool is_file) {
 		disk_inode->magic = INODE_MAGIC;
 		// P4-4-2 is_file 추가
 		disk_inode->is_file = is_file;
-		// 후에 추가 요망
+		// P4-5-2 is_soft_link 추가
+		disk_inode->is_soft_link = false;
 
 		// P4-2-4 FAT으로 수정
 		#ifdef EFILESYS
@@ -439,4 +443,36 @@ inode_is_dir (const struct inode *inode){
 int
 inode_open_cnt (const struct inode *inode){
 	return inode->open_cnt;
+}
+
+// P4-5-2 보조 함수 추가
+// inode를 soft_link
+bool 
+inode_set_soft_link (disk_sector_t inode_sector, const char *target){
+	struct inode *inode = inode_open(inode_sector);
+	// inode open false
+	if (inode == NULL){
+		inode_close(inode);
+		return false;
+	}
+	
+	// set soft link
+	inode->data.is_soft_link = true;
+	memcpy(inode->data.soft_link_path, target, strlen(target)+1);
+	inode_close(inode);
+	return true;
+}
+
+
+// inode의 is_soft_link 반환
+bool
+inode_is_soft_link (const struct inode *inode){
+	return inode->data.is_soft_link;
+
+}
+
+// inode의 soft_link_path 반환
+char *
+inode_soft_link_path (const struct inode* inode){
+	return inode->data.soft_link_path;
 }

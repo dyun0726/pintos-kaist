@@ -4,7 +4,7 @@ Kernel command line: -q -f put symlink-dir put tar run symlink-dir
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  130,867,200 loops/s.
+Calibrating timer...  157,081,600 loops/s.
 hd0:0: detected 353 sector (176 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 4,032 sector (1 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1:0: detected 226 sector (113 kB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -18,15 +18,23 @@ Executing 'symlink-dir':
 (symlink-dir) mkdir "/a"
 (symlink-dir) mkdir "a/b"
 (symlink-dir) create symlink "a/link_b"
-system call!
+(symlink-dir) create "a/link_b/file"
+(symlink-dir) open "file"
+(symlink-dir) write "file"
+(symlink-dir) close "file"
+(symlink-dir) open "a/b/file" for verification
+(symlink-dir) verified contents of "a/b/file"
+(symlink-dir) close "a/b/file"
+(symlink-dir) end
+symlink-dir: exit(0)
 Execution of 'symlink-dir' complete.
-Timer: 92 ticks
-Thread: 36 idle ticks, 54 kernel ticks, 2 user ticks
+Timer: 104 ticks
+Thread: 44 idle ticks, 49 kernel ticks, 11 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 153 reads, 552 writes
+hd0:1: 400 reads, 877 writes
 hd1:0: 226 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1075 characters output
+Console: 1344 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

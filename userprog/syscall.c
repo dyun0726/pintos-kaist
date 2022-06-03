@@ -143,6 +143,9 @@ syscall_handler (struct intr_frame *f UNUSED) {
 		case SYS_INUMBER:
 			f->R.rax = inumber(f->R.rdi);
 			break;
+		case SYS_SYMLINK:
+			f->R.rax = symlink(f->R.rdi, f->R.rsi);
+			break;
 
 		default:
 			printf ("system call!\n");
@@ -539,6 +542,13 @@ int inumber (int fd){
 	return inode_get_inumber(file_get_inode(file));
 }
 
+// P4-5-1 Systemcall symlink 추가
+int symlink (const char *target, const char *linkpath){
+	check_address(target);
+	check_address(linkpath);
+
+	return filesys_make_symlink(target, linkpath);
+}
 
 // helper 함수들
 // fd 비교 함수

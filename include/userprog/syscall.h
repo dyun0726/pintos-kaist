@@ -48,4 +48,7 @@ bool readdir (int fd, char *name);
 bool isdir (int fd);
 int inumber (int fd);
 
+// P4-5-1 System call symlink 추가
+int symlink (const char *target, const char *linkpath);
+
 #endif /* userprog/syscall.h */

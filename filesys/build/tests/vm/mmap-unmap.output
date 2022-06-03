@@ -22,7 +22,7 @@ Executing 'mmap-unmap':
 mmap-unmap: exit(-1)
 Execution of 'mmap-unmap' complete.
 Timer: 89 ticks
-Thread: 36 idle ticks, 51 kernel ticks, 2 user ticks
+Thread: 35 idle ticks, 53 kernel ticks, 2 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 247 reads, 554 writes
 hd1:0: 109 reads, 0 writes

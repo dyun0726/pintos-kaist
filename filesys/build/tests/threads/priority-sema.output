@@ -34,8 +34,8 @@ Executing 'priority-sema':
 (priority-sema) Back in main thread.
 (priority-sema) end
 Execution of 'priority-sema' complete.
-Timer: 81 ticks
-Thread: 35 idle ticks, 46 kernel ticks, 0 user ticks
+Timer: 79 ticks
+Thread: 35 idle ticks, 45 kernel ticks, 0 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 169 reads, 332 writes
 hd1:1: 0 reads, 0 writes

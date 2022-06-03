@@ -21,4 +21,7 @@ bool filesys_remove (const char *name);
 struct dir *get_dir(char *name, char *file_name);
 struct dir *path_parsing(char *path_name, char *file_name);
 
+// P4-5-1 systemcall symlink 구현
+int filesys_make_symlink(const char* target, const char* linkpath);
+
 #endif /* filesys/filesys.h */
